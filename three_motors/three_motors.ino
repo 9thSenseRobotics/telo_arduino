@@ -51,9 +51,9 @@
 #define SERIAL_SPEED 115200
 #define BLUETOOTH_SPEED 115200
 #define TIMED_OUT 8000
-#define DEFAULT_SPEED 140
-#define DEFAULT_TILT_SPEED 100
-#define DEFAULT_TURN_FOREVER_SPEED 100
+#define DEFAULT_SPEED 255
+#define DEFAULT_TILT_SPEED 180
+#define DEFAULT_TURN_FOREVER_SPEED 200
 #define MOVE_TIME 100
 #define MIN_ACCEL_SPEED 100
 #define MIN_DECEL_SPEED 60
@@ -254,7 +254,7 @@ void moveForwardForever(byte flag, byte numOfValues)
   else Moving = true;
   char message = 'F';
   meetAndroid.send(message);
-  timeOutCheck = millis();
+  timeOutCheck = millis(); 
 }
 
 void moveBackwardaLittle(byte flag, byte numOfValues)

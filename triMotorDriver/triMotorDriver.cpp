@@ -28,7 +28,7 @@
 triMotorDriver::triMotorDriver()
 {
     // Pin map
-    // pins used are 0,1,3,4,5,6,16,17,18,19,22,24,26,30,32,34,38,40,42
+    // pins used are 0,1,3,4,5,6,16,17,18,19,22,24,26,30,32,34,40,42
     // the analog pins used, A5,A6,A7,A8, are set as #defines in the triMotorDriver.h file
     // if we later decide to use the servo library, then pins 9 and 10 will not be available for analogWrite()
     // available for future use: interrupt pins 2, PWM pins 7 - 13
@@ -36,12 +36,11 @@ triMotorDriver::triMotorDriver()
     IN1A = 22;
     IN2A = 24;
     STATUSA = 26;
-    ENABLEA = 28;
+    ENABLEAB = 28;
     PWMA = 4;  // PWM: 0 to 13. Provide 8-bit PWM output with the analogWrite() function.
     IN1B = 32;
     IN2B = 34;
     STATUSB = 36;
-    ENABLEB = 38;
     PWMB = 5;
     IN1C = 42;
     IN2C = 44;
@@ -58,13 +57,12 @@ triMotorDriver::triMotorDriver()
     pinMode(IN1A,OUTPUT);
     pinMode(IN2A,OUTPUT);
     pinMode(STATUSA,INPUT);
-    pinMode(ENABLEA,OUTPUT);
+    pinMode(ENABLEAB,OUTPUT);
     pinMode(PWMA,OUTPUT);  // PWM: 0 to 13. Provide 8-bit PWM output with the analogWrite() function.
     
     pinMode(IN1B,OUTPUT);
     pinMode(IN2B,OUTPUT);
     pinMode(STATUSB,INPUT);
-    pinMode(ENABLEB,OUTPUT);
     pinMode(PWMB,OUTPUT);
     
     pinMode(IN1C,OUTPUT);
@@ -81,35 +79,35 @@ triMotorDriver::triMotorDriver()
     pinMode(ENCC, INPUT);
     
     // start disabled, with directions set to forward
-    digitalWrite(ENABLEA, LOW);
-    digitalWrite(IN1A,HIGH);
-    digitalWrite(IN2A,LOW);    
+    digitalWrite(ENABLEAB, LOW);
+    digitalWrite(IN1A,LOW);
+    digitalWrite(IN2A,HIGH);    
     analogWrite(PWMA, 0);
     
-    digitalWrite(ENABLEB, LOW);
-    digitalWrite(IN1B,HIGH);
-    digitalWrite(IN2B,LOW); 
+    digitalWrite(ENABLEAB, LOW);
+    digitalWrite(IN1B,LOW);
+    digitalWrite(IN2B,HIGH); 
     analogWrite(PWMB, 0);
     
     digitalWrite(ENABLEC, LOW);
-    digitalWrite(IN1C,HIGH);
-    digitalWrite(IN2C,LOW); 
+    digitalWrite(IN1C,LOW);
+    digitalWrite(IN2C,HIGH); 
     analogWrite(PWMC, 0);
 }
 
 void triMotorDriver::setSpeedA(int speed)
 {
-    digitalWrite(ENABLEA, HIGH);
+    digitalWrite(ENABLEAB, HIGH);
     if (speed < 0)
     {
-        digitalWrite(IN1A,LOW);
-        digitalWrite(IN2A,HIGH);   // turn reverse
+        digitalWrite(IN1A,HIGH);
+        digitalWrite(IN2A,LOW);   // turn reverse
         speed = -speed;
     }
     else
     {
-        digitalWrite(IN1A,HIGH);
-        digitalWrite(IN2A,LOW);   // turn forward
+        digitalWrite(IN1A,LOW);
+        digitalWrite(IN2A,HIGH);   // turn forward
     }
     if (speed > 255) speed = 255;
     analogWrite(PWMA, speed);
@@ -117,17 +115,17 @@ void triMotorDriver::setSpeedA(int speed)
 
 void triMotorDriver::setSpeedB(int speed)
 {
-    digitalWrite(ENABLEB, HIGH);
+    digitalWrite(ENABLEAB, HIGH);
     if (speed < 0)
     {
-        digitalWrite(IN1B,LOW);
-        digitalWrite(IN2B,HIGH);   // turn reverse
+        digitalWrite(IN1B,HIGH);
+        digitalWrite(IN2B,LOW);   // turn reverse
         speed = -speed;
     }
     else
     {
-        digitalWrite(IN1B,HIGH);
-        digitalWrite(IN2B,LOW);   // turn forward
+        digitalWrite(IN1B,LOW);
+        digitalWrite(IN2B,HIGH);   // turn forward
     }
     if (speed > 255) speed = 255;
     analogWrite(PWMB, speed);
@@ -138,14 +136,14 @@ void triMotorDriver::setSpeedC(int speed)
     digitalWrite(ENABLEC, HIGH);
     if (speed < 0)
     {
-        digitalWrite(IN1C,LOW);
-        digitalWrite(IN2C,HIGH);   // turn reverse
+        digitalWrite(IN1C,HIGH);
+        digitalWrite(IN2C,LOW);   // turn reverse
         speed = -speed;
     }
     else
     {
-        digitalWrite(IN1C,HIGH);
-        digitalWrite(IN2C,LOW);   // turn forward
+        digitalWrite(IN1C,LOW);
+        digitalWrite(IN2C,HIGH);   // turn forward
     }
     if (speed > 255) speed = 255;
     analogWrite(PWMC, speed);
@@ -153,45 +151,39 @@ void triMotorDriver::setSpeedC(int speed)
 
 void triMotorDriver::setSpeedAB(int speedA, int speedB)
 {
-    digitalWrite(ENABLEA, HIGH);
-    digitalWrite(ENABLEB, HIGH);
+    digitalWrite(ENABLEAB, HIGH);
     if (speedA < 0)
     {
-        digitalWrite(IN1A,LOW);
-        digitalWrite(IN2A,HIGH);   // turn reverse
+        digitalWrite(IN1A,HIGH);
+        digitalWrite(IN2A,LOW);   // turn reverse
         speedA = -speedA;
     }
     else
     {
-        digitalWrite(IN1A,HIGH);
-        digitalWrite(IN2A,LOW);   // turn forward
+        digitalWrite(IN1A,LOW);
+        digitalWrite(IN2A,HIGH);   // turn forward
     }
     if (speedA > 255) speedA = 255;
     
     if (speedB < 0)
     {
-        digitalWrite(IN1B,LOW);
-        digitalWrite(IN2B,HIGH);   // turn reverse
+        digitalWrite(IN1B,HIGH);
+        digitalWrite(IN2B,LOW);   // turn reverse
         speedB = -speedB;
     }
     else
     {
-        digitalWrite(IN1B,HIGH);
-        digitalWrite(IN2B,LOW);   // turn forward
+        digitalWrite(IN1B,LOW);
+        digitalWrite(IN2B,HIGH);   // turn forward
     }
     analogWrite(PWMA, speedA);
     analogWrite(PWMB, speedB);
 }
 
-void triMotorDriver::setBrakesA()
+void triMotorDriver::setBrakesAB()
 {
-    digitalWrite(ENABLEA, LOW);
+    digitalWrite(ENABLEAB, LOW);
     analogWrite(PWMA, 0);
-}
-
-void triMotorDriver::setBrakesB()
-{
-    digitalWrite(ENABLEB, LOW);
     analogWrite(PWMB, 0);
 }
 
@@ -201,17 +193,9 @@ void triMotorDriver::setBrakesC()
     analogWrite(PWMC, 0);
 }
 
-void triMotorDriver::setBrakesAB()
-{
-    digitalWrite(ENABLEA, LOW);
-    digitalWrite(ENABLEB, LOW);
-    analogWrite(PWMA, 0);
-    analogWrite(PWMB, 0);
-}
-
 void triMotorDriver::setCoastA()
 {
-    digitalWrite(ENABLEA, HIGH);
+    digitalWrite(ENABLEAB, HIGH);
     digitalWrite(IN1A, LOW);
     digitalWrite(IN2A, LOW);
     analogWrite(PWMA, 255);   
@@ -219,7 +203,7 @@ void triMotorDriver::setCoastA()
     
 void triMotorDriver::setCoastB()
 {
-    digitalWrite(ENABLEB, HIGH);
+    digitalWrite(ENABLEAB, HIGH);
     digitalWrite(IN1B, LOW);
     digitalWrite(IN2B, LOW);
     analogWrite(PWMB, 255);   
@@ -235,8 +219,7 @@ void triMotorDriver::setCoastC()
 
 void triMotorDriver::setCoastAB()
 {
-    digitalWrite(ENABLEA, HIGH);
-    digitalWrite(ENABLEB, HIGH);
+    digitalWrite(ENABLEAB, HIGH);
     digitalWrite(IN1A, LOW);
     digitalWrite(IN2A, LOW);
     digitalWrite(IN1B, LOW);

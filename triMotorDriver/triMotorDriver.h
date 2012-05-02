@@ -20,10 +20,8 @@ class triMotorDriver
     void setSpeedB(int speed); // Set speed for right motor
     void setSpeedC(int speed); // Set speed for top motor
     void setSpeedAB(int speedA, int speedB); // Set speed for left and right motors
-    void setBrakesA();
-    void setBrakesB();
-    void setBrakesC();
     void setBrakesAB();
+    void setBrakesC();
     void setCoastA();
     void setCoastB();
     void setCoastC();
@@ -40,13 +38,12 @@ class triMotorDriver
     unsigned char IN1A;
     unsigned char IN2A;
     unsigned char STATUSA;
-    unsigned char ENABLEA;
+    unsigned char ENABLEAB;
     unsigned char PWMA;  // PWM: 0 to 13. Provide 8-bit PWM output with the analogWrite() function.
     
     unsigned char IN1B;
     unsigned char IN2B;
     unsigned char STATUSB;
-    unsigned char ENABLEB;
     unsigned char PWMB;
     
     unsigned char IN1C;

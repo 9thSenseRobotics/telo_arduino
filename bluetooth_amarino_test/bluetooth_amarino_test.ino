@@ -19,10 +19,10 @@ void setup()
   // register callback functions, which will be called when an associated event occurs.
   // - the first parameter is the name of your function (see below)
   // - match the second parameter ('A', 'B', 'a', etc...) with the flag on your Android application
-  meetAndroid.registerFunction(testEvent, 'A'); 
- meetAndroid.registerFunction(testEvent, 'r');
- meetAndroid.registerFunction(testEvent, 's');
- meetAndroid.registerFunction(testEvent, 'v');
+  meetAndroid.registerFunction(testEventA, 'A'); 
+ meetAndroid.registerFunction(testEventF, 'F');
+ meetAndroid.registerFunction(testEventx, 'x');
+ meetAndroid.registerFunction(testEvent, 'R');
  meetAndroid.registerFunction(testEvent, 'm'); 
 
   pinMode(onboardLed, OUTPUT);
@@ -50,6 +50,21 @@ void testEvent(byte flag, byte numOfValues)
   Serial.print("value recieved = ");
   Serial.println(sentValue);
   flushLed(1000);
+}
+
+void testEventA(byte flag, byte numOfValues)
+{
+  sentValue = 0;
+}
+
+void testEventF(byte flag, byte numOfValues)
+{
+  sentValue = 1;
+}
+
+void testEventx(byte flag, byte numOfValues)
+{
+  sentValue = 2;
 }
 
 void flushLed(int time)
