@@ -37,7 +37,7 @@
 // U#
 
 #include <triMotorDriver.h>
-#include <MeetAndroid.h>
+#include <MeetAndroidMega.h>
 
 // timers on the mega:
   // timer 0 pins A,B are 13,4
@@ -48,7 +48,7 @@
   // timer 5 pins A,B,C are 44,45,46
   
 #define tiltPin 3
-#define SerialSpeed 57600
+#define SerialSpeed 115200
 
 #define TIMED_OUT 8000
 #define DEFAULT_SPEED 140
@@ -75,7 +75,7 @@
 #define MOTOR_DRIVER_MAX 400
 #define MOTOR_DRIVER_MIN -400
 
-MeetAndroid meetAndroid;
+MeetAndroidMega meetAndroid;
 triMotorDriver motorDriver;
 
 //Servo tiltServo;  // create servo objects to control the servos
@@ -442,7 +442,7 @@ void commCheck(byte flag, byte numOfValues)
 void setup()  
 {
   Serial.begin(SerialSpeed);
-  Serial1.begin(SerialSpeed);   // connect to bluetooth on serial1 
+  SERIAL_PORT_BLUETOOTH.begin(SerialSpeed);   // connect to bluetooth on serial1 
   motorDriver.setCoastAB();
   motorDriver.setBrakesC();
   
