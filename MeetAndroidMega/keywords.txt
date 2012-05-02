@@ -1,4 +1,4 @@
-MeetAndroidMega	KEYWORD1
+MeetAndroid KEYWORD1
 flush	KEYWORD2
 receive	KEYWORD2
 registerFunction	KEYWORD2

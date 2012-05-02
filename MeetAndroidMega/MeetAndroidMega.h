@@ -33,7 +33,11 @@
 	  - send functions added
 	  - names of most functions changed
 	  
-  last modified by Bonifaz Kaufmann 08 Dec 2011
+  modified by Bonifaz Kaufmann 08 Dec 2011
+  Following changes were made:
+    - put the Bluetooth serial port onto Serial2
+    - moved the definition of SERIAL_PORT to the .h file and changed the name to SERIAL_PORT_BLUETOOTH
+  last changes were made by Dan Barry 28 April 2012
 */
 
 #ifndef MeetAndroidMega_h
@@ -46,6 +50,7 @@
 /******************************************************************************
 * Definitions
 ******************************************************************************/
+#define SERIAL_PORT_BLUETOOTH Serial2
 
 class MeetAndroidMega : public Print
 

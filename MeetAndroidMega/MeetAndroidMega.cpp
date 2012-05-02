@@ -32,7 +32,7 @@ extern "C" {
 #include <stdlib.h>
 }
 
-#define SERIAL_PORT Serial2
+
 
 // Private methods
 void MeetAndroidMega::processCommand(){
@@ -102,9 +102,9 @@ bool MeetAndroidMega::receive(){
 	boolean timeout = false;
 	while(!timeout)
 	{
-		while(SERIAL_PORT.available() > 0)
+		while(SERIAL_PORT_BLUETOOTH.available() > 0)
 		{
-			lastByte = SERIAL_PORT.read();
+			lastByte = SERIAL_PORT_BLUETOOTH.read();
 			
 			if(lastByte == abord){
 				flush();
@@ -120,9 +120,9 @@ bool MeetAndroidMega::receive(){
 			else return false;
 		}
 		
-		if(SERIAL_PORT.available() <= 0 && !timeout){
+		if(SERIAL_PORT_BLUETOOTH.available() <= 0 && !timeout){
 			if(waitTime > 0) delayMicroseconds(waitTime);
-			if(SERIAL_PORT.available() <= 0) timeout = true;
+			if(SERIAL_PORT_BLUETOOTH.available() <= 0) timeout = true;
 		}
 	}
 	return timeout;
@@ -267,66 +267,66 @@ double MeetAndroidMega::getDouble()
 
 #if defined(ARDUINO) && ARDUINO >= 100
 size_t MeetAndroidMega::write(uint8_t b){
-	return SERIAL_PORT.print(b);
+	return SERIAL_PORT_BLUETOOTH.print(b);
 }
 #else
 void MeetAndroidMega::write(uint8_t b){
-	SERIAL_PORT.print(b);
+	SERIAL_PORT_BLUETOOTH.print(b);
 }
 #endif
 	
 
 
 void MeetAndroidMega::send(char c ){
-	SERIAL_PORT.print(startFlag);
-	SERIAL_PORT.print(c);
-	SERIAL_PORT.print(ack);
+	SERIAL_PORT_BLUETOOTH.print(startFlag);
+	SERIAL_PORT_BLUETOOTH.print(c);
+	SERIAL_PORT_BLUETOOTH.print(ack);
 }
 
 void MeetAndroidMega::send(const char str[]){
-	SERIAL_PORT.print(startFlag);
-	SERIAL_PORT.print(str);
-	SERIAL_PORT.print(ack);
+	SERIAL_PORT_BLUETOOTH.print(startFlag);
+	SERIAL_PORT_BLUETOOTH.print(str);
+	SERIAL_PORT_BLUETOOTH.print(ack);
 }
 void MeetAndroidMega::send(uint8_t n){
-	SERIAL_PORT.print(startFlag);
-	SERIAL_PORT.print(n);
-	SERIAL_PORT.print(ack);
+	SERIAL_PORT_BLUETOOTH.print(startFlag);
+	SERIAL_PORT_BLUETOOTH.print(n);
+	SERIAL_PORT_BLUETOOTH.print(ack);
 }
 void MeetAndroidMega::send(int n){
-	SERIAL_PORT.print(startFlag);
-	SERIAL_PORT.print(n);
-	SERIAL_PORT.print(ack);
+	SERIAL_PORT_BLUETOOTH.print(startFlag);
+	SERIAL_PORT_BLUETOOTH.print(n);
+	SERIAL_PORT_BLUETOOTH.print(ack);
 }
 void MeetAndroidMega::send(unsigned int n){
-	SERIAL_PORT.print(startFlag);
-	SERIAL_PORT.print(n);
-	SERIAL_PORT.print(ack);
+	SERIAL_PORT_BLUETOOTH.print(startFlag);
+	SERIAL_PORT_BLUETOOTH.print(n);
+	SERIAL_PORT_BLUETOOTH.print(ack);
 }
 void MeetAndroidMega::send(long n){
-	SERIAL_PORT.print(startFlag);
-	SERIAL_PORT.print(n);
-	SERIAL_PORT.print(ack);
+	SERIAL_PORT_BLUETOOTH.print(startFlag);
+	SERIAL_PORT_BLUETOOTH.print(n);
+	SERIAL_PORT_BLUETOOTH.print(ack);
 }
 void MeetAndroidMega::send(unsigned long n){
-	SERIAL_PORT.print(startFlag);
-	SERIAL_PORT.print(n);
-	SERIAL_PORT.print(ack);
+	SERIAL_PORT_BLUETOOTH.print(startFlag);
+	SERIAL_PORT_BLUETOOTH.print(n);
+	SERIAL_PORT_BLUETOOTH.print(ack);
 }
 void MeetAndroidMega::send(long n, int base){
-	SERIAL_PORT.print(startFlag);
-	SERIAL_PORT.print(n, base);
-	SERIAL_PORT.print(ack);
+	SERIAL_PORT_BLUETOOTH.print(startFlag);
+	SERIAL_PORT_BLUETOOTH.print(n, base);
+	SERIAL_PORT_BLUETOOTH.print(ack);
 }
 void MeetAndroidMega::send(double n){
-	SERIAL_PORT.print(startFlag);
-	SERIAL_PORT.print(n);
-	SERIAL_PORT.print(ack);
+	SERIAL_PORT_BLUETOOTH.print(startFlag);
+	SERIAL_PORT_BLUETOOTH.print(n);
+	SERIAL_PORT_BLUETOOTH.print(ack);
 }
 void MeetAndroidMega::sendln(void){
-	SERIAL_PORT.print(startFlag);
-	SERIAL_PORT.println();
-	SERIAL_PORT.print(ack);
+	SERIAL_PORT_BLUETOOTH.print(startFlag);
+	SERIAL_PORT_BLUETOOTH.println();
+	SERIAL_PORT_BLUETOOTH.print(ack);
 }
 
 void MeetAndroidMega::flush(){
