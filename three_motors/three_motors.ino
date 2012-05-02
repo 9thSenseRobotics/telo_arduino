@@ -498,8 +498,8 @@ void setup()
   meetAndroid.registerFunction(turnRight, 'r');
   meetAndroid.registerFunction(turnLeft, 'l');
   meetAndroid.registerFunction(turnLeftForever, 'L');
-  //meetAndroid.registerFunction(tiltUp, 'u');
-  //meetAndroid.registerFunction(tiltDown, 'n');  
+  meetAndroid.registerFunction(tiltUp, 'u');
+  meetAndroid.registerFunction(tiltDown, 'n');  
   //meetAndroid.registerFunction(servoCenter, 'j');
   //meetAndroid.registerFunction(servoMaxDown, 'm');
   meetAndroid.registerFunction(stopCallback, 'x');
