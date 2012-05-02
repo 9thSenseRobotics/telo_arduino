@@ -47,11 +47,12 @@
   // timer 4 pins A,B,C are 6,7,8
   // timer 5 pins A,B,C are 44,45,46
   
-#define tiltPin 3
-#define SerialSpeed 115200
 
+#define SERIAL_SPEED 115200
+#define BLUETOOTH_SPEED 115200
 #define TIMED_OUT 8000
 #define DEFAULT_SPEED 140
+#define DEFAULT_TILT_SPEED 100
 #define DEFAULT_TURN_FOREVER_SPEED 100
 #define MOVE_TIME 100
 #define MIN_ACCEL_SPEED 100
@@ -368,6 +369,38 @@ void turnLeft(byte flag, byte numOfValues) // speed goes from 0 to 255
   Stop();    
 }
 
+
+void tiltUp(byte flag, byte numOfValues) // speed goes from 0 to 255
+{
+  mySpeed = DEFAULT_TILT_SPEED; //meetAndroid.getInt(); // speed goes from 0 to 255
+  Serial.println("tilting up, speed = ");
+  Serial.println(mySpeed);
+  motorDriver.setSpeedC(mySpeed);
+  //if (mySpeed == 0 || stopIfFault()) Moving = false;
+  //else Moving = true;
+  char message = 'u';
+  meetAndroid.send(message);
+  timeOutCheck = millis();
+  delay(200);
+  motorDriver.setCoastC();    
+}
+
+
+void tiltDown(byte flag, byte numOfValues) // speed goes from 0 to 255
+{
+  mySpeed = -DEFAULT_TILT_SPEED; //meetAndroid.getInt(); // speed goes from 0 to 255
+  Serial.println("tilting dwon, speed = ");
+  Serial.println(mySpeed);
+  motorDriver.setSpeedC(mySpeed);
+  //if (mySpeed == 0 || stopIfFault()) Moving = false;
+  //else Moving = true;
+  char message = 'n';
+  meetAndroid.send(message);
+  timeOutCheck = millis();
+  delay(200);
+  motorDriver.setCoastC();   
+}
+
 void getMotorCurrents()
 {
   int currentLeftMotor = motorDriver.getCurrentA();
@@ -441,8 +474,8 @@ void commCheck(byte flag, byte numOfValues)
  
 void setup()  
 {
-  Serial.begin(SerialSpeed);
-  SERIAL_PORT_BLUETOOTH.begin(SerialSpeed);   // connect to bluetooth on serial1 
+  Serial.begin(SERIAL_SPEED);
+  SERIAL_PORT_BLUETOOTH.begin(BLUETOOTH_SPEED);   // connect to bluetooth on serial1 
   motorDriver.setCoastAB();
   motorDriver.setBrakesC();
   
@@ -465,8 +498,8 @@ void setup()
   meetAndroid.registerFunction(turnRight, 'r');
   meetAndroid.registerFunction(turnLeft, 'l');
   meetAndroid.registerFunction(turnLeftForever, 'L');
-  //meetAndroid.registerFunction(servoUp, 'u');
-  //meetAndroid.registerFunction(servoDown, 'n');  
+  //meetAndroid.registerFunction(tiltUp, 'u');
+  //meetAndroid.registerFunction(tiltDown, 'n');  
   //meetAndroid.registerFunction(servoCenter, 'j');
   //meetAndroid.registerFunction(servoMaxDown, 'm');
   meetAndroid.registerFunction(stopCallback, 'x');
