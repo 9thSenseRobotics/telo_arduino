@@ -52,15 +52,18 @@
 #define BLUETOOTH_SPEED 115200
 #define TIMED_OUT 8000
 #define DEFAULT_SPEED 220
-#define DEFAULT_TILT_SPEED 220
+#define BW_REDUCTION 50
+#define DEFAULT_TILT_SPEED 240
+#define TD_REDUCTION 50
 #define DEFAULT_TURN_FOREVER_SPEED 220
 #define MOVE_TIME 100
+#define TILT_TIME 100
 #define MIN_ACCEL_SPEED 100
 #define MIN_DECEL_SPEED 60
 #define DELTA_SPEED 10
 #define ACCEL_DELAY 200
-#define LEFT_MOTOR_BIAS 13
-#define LEFT_MOTOR_BW_BIAS 30
+#define LEFT_MOTOR_BIAS 10
+#define LEFT_MOTOR_BW_BIAS 23
 #define LEFT_MOTOR_STOP_DELAY 0
 
 //#define TILT_CENTER 85
@@ -260,7 +263,7 @@ void moveForwardForever(byte flag, byte numOfValues)
 
 void moveBackwardaLittle(byte flag, byte numOfValues)
 {
-  mySpeed = -DEFAULT_SPEED + 50; //meetAndroid.getInt(); // speed goes from 0 to 255
+  mySpeed = -DEFAULT_SPEED + BW_REDUCTION; //meetAndroid.getInt(); // speed goes from 0 to 255
   Serial.println("moving, speed = ");
   Serial.println(mySpeed);
   if (brakesOn) coast();
@@ -278,7 +281,7 @@ void moveBackwardaLittle(byte flag, byte numOfValues)
 
 void moveBackward(byte flag, byte numOfValues)
 {
-  mySpeed = -DEFAULT_SPEED + 50; //meetAndroid.getInt(); // speed goes from 0 to 255// backward should be slower than forward
+  mySpeed = -DEFAULT_SPEED + BW_REDUCTION; //meetAndroid.getInt(); // speed goes from 0 to 255// backward should be slower than forward
   Serial.println("moving, speed = ");
   Serial.println(mySpeed);
   if (brakesOn) coast();
@@ -296,7 +299,7 @@ void moveBackward(byte flag, byte numOfValues)
 
 void moveBackwardForever(byte flag, byte numOfValues)
 {
-  mySpeed = -DEFAULT_SPEED + 50; //meetAndroid.getInt(); // speed goes from 0 to 255 // backward should be slower than forward
+  mySpeed = -DEFAULT_SPEED + BW_REDUCTION; //meetAndroid.getInt(); // speed goes from 0 to 255 // backward should be slower than forward
   Serial.println("moving, speed = ");
   Serial.println(mySpeed);
   if (brakesOn) coast();
@@ -382,7 +385,7 @@ void tiltUp(byte flag, byte numOfValues) // speed goes from 0 to 255
   char message = 'u';
   meetAndroid.send(message);
   timeOutCheck = millis();
-  delay(400);
+  delay(TILT_TIME);
   motorDriver.setCoastC();    
 }
 
@@ -398,7 +401,7 @@ void tiltDown(byte flag, byte numOfValues) // speed goes from 0 to 255
   char message = 'n';
   meetAndroid.send(message);
   timeOutCheck = millis();
-  delay(400);
+  delay(TILT_TIME);
   motorDriver.setCoastC();   
 }
 
