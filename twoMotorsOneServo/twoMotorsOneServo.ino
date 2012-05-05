@@ -36,7 +36,7 @@
 // if there is no number, then the servo will just move by one step (TILT_DELTA or PAN_DELTA)
 // U#
 
-#include <VNH5019_motor_driver.h>
+#include <DualVNH5019MotorShield.h>
 #include <Servo.h> 
 #include <amarinoMega.h>
 
@@ -91,7 +91,7 @@
 #define MOTOR_DRIVER_MIN -400
 
 amarinoMega amarino;
-VNH5019_motor_driver motorDriver;
+DualVNH5019MotorShield motorDriver;
 
 Servo tiltServo;  // create servo objects to control the servos
 int tiltPos;    // variable to store the servo position 
