@@ -38,7 +38,7 @@
 
 #include <VNH5019_motor_driver.h>
 #include <Servo.h> 
-#include <MeetAndroid.h>
+#include <amarinoMega.h>
 
 // pins 0 and 1 are used for serial comm with the laptop
 // pins used by the pololu shield are the following:
@@ -90,7 +90,7 @@
 #define MOTOR_DRIVER_MAX 400
 #define MOTOR_DRIVER_MIN -400
 
-MeetAndroid meetAndroid;
+amarinoMega amarino;
 VNH5019_motor_driver motorDriver;
 
 Servo tiltServo;  // create servo objects to control the servos
@@ -108,7 +108,7 @@ void checkBattery(byte flag, byte numOfValues)
   if (batteryPercent > 99) batteryPercent = 100;
   if (batteryPercent < 0) batteryPercent = 0;
   //batteryPercent = analogRead(batteryMonitorPin);  // for testing
-  meetAndroid.send(batteryPercent); 
+  amarino.send(batteryPercent); 
 } 
 
 // pololu driver goes from -400 to 400, but our input goes from -255 to 255, so ew have to convert the values
@@ -162,7 +162,7 @@ void stopCallback(byte flag, byte numOfValues)
 {
   Stop();
   char message = 'x';
-  meetAndroid.send(message);
+  amarino.send(message);
 }
 
 void accelerate(int targetSpeed)
@@ -228,7 +228,7 @@ void decelerate(int initialSpeed)
 
 void moveForwardaLittle(byte flag, byte numOfValues)
 {
-  mySpeed = DEFAULT_SPEED; //meetAndroid.getInt(); // speed goes from 0 to 255
+  mySpeed = DEFAULT_SPEED; //amarino.getInt(); // speed goes from 0 to 255
   Serial.println("moving, speed = ");
   Serial.println(mySpeed);
   if (brakesOn) coast();
@@ -236,7 +236,7 @@ void moveForwardaLittle(byte flag, byte numOfValues)
   if (mySpeed == 0 || stopIfFault()) Moving = false;
   else Moving = true;
   char message = 't';
-  meetAndroid.send(message);
+  amarino.send(message);
   timeOutCheck = millis();
   delay(300);
   Stop();
@@ -244,7 +244,7 @@ void moveForwardaLittle(byte flag, byte numOfValues)
 
 void moveForward(byte flag, byte numOfValues)
 {
-  mySpeed = DEFAULT_SPEED; //meetAndroid.getInt(); // speed goes from 0 to 255
+  mySpeed = DEFAULT_SPEED; //amarino.getInt(); // speed goes from 0 to 255
   Serial.println("moving, speed = ");
   Serial.println(mySpeed);
   if (brakesOn) coast();
@@ -253,7 +253,7 @@ void moveForward(byte flag, byte numOfValues)
   if (mySpeed == 0 || stopIfFault()) Moving = false;
   else Moving = true;
   char message = 'f';
-  meetAndroid.send(message);
+  amarino.send(message);
   timeOutCheck = millis();
   delay(MOVE_TIME);
   decelerate(mySpeed);
@@ -262,7 +262,7 @@ void moveForward(byte flag, byte numOfValues)
 
 void moveForwardForever(byte flag, byte numOfValues)
 {
-  mySpeed = DEFAULT_SPEED; //meetAndroid.getInt(); // speed goes from 0 to 255
+  mySpeed = DEFAULT_SPEED; //amarino.getInt(); // speed goes from 0 to 255
   Serial.println("moving, speed = ");
   Serial.println(mySpeed);
   if (brakesOn) coast();
@@ -271,13 +271,13 @@ void moveForwardForever(byte flag, byte numOfValues)
   if (mySpeed == 0 || stopIfFault()) Moving = false;
   else Moving = true;
   char message = 'F';
-  meetAndroid.send(message);
+  amarino.send(message);
   timeOutCheck = millis();
 }
 
 void moveBackwardaLittle(byte flag, byte numOfValues)
 {
-  mySpeed = -DEFAULT_SPEED; //meetAndroid.getInt(); // speed goes from 0 to 255
+  mySpeed = -DEFAULT_SPEED; //amarino.getInt(); // speed goes from 0 to 255
   Serial.println("moving, speed = ");
   Serial.println(mySpeed);
   if (brakesOn) coast();
@@ -286,7 +286,7 @@ void moveBackwardaLittle(byte flag, byte numOfValues)
   if (mySpeed == 0 || stopIfFault()) Moving = false;
   else Moving = true;
   char message = 'g';
-  meetAndroid.send(message);
+  amarino.send(message);
   timeOutCheck = millis();
   delay(300);
   decelerate(mySpeed);
@@ -295,7 +295,7 @@ void moveBackwardaLittle(byte flag, byte numOfValues)
 
 void moveBackward(byte flag, byte numOfValues)
 {
-  mySpeed = -DEFAULT_SPEED; //meetAndroid.getInt(); // speed goes from 0 to 255
+  mySpeed = -DEFAULT_SPEED; //amarino.getInt(); // speed goes from 0 to 255
   Serial.println("moving, speed = ");
   Serial.println(mySpeed);
   if (brakesOn) coast();
@@ -304,7 +304,7 @@ void moveBackward(byte flag, byte numOfValues)
   if (mySpeed == 0 || stopIfFault()) Moving = false;
   else Moving = true;
   char message = 'b';
-  meetAndroid.send(message);
+  amarino.send(message);
   timeOutCheck = millis();
   delay(MOVE_TIME);
   decelerate(mySpeed);
@@ -313,7 +313,7 @@ void moveBackward(byte flag, byte numOfValues)
 
 void moveBackwardForever(byte flag, byte numOfValues)
 {
-  mySpeed = -DEFAULT_SPEED; //meetAndroid.getInt(); // speed goes from 0 to 255
+  mySpeed = -DEFAULT_SPEED; //amarino.getInt(); // speed goes from 0 to 255
   Serial.println("moving, speed = ");
   Serial.println(mySpeed);
   if (brakesOn) coast();
@@ -322,13 +322,13 @@ void moveBackwardForever(byte flag, byte numOfValues)
   if (mySpeed == 0 || stopIfFault()) Moving = false;
   else Moving = true;
   char message = 'B';
-  meetAndroid.send(message);
+  amarino.send(message);
   timeOutCheck = millis();
 }
 
 void turnRightForever(byte flag, byte numOfValues) // speed goes from 0 to 255
 {
-  mySpeed = DEFAULT_TURN_FOREVER_SPEED; //meetAndroid.getInt(); // speed goes from 0 to 255
+  mySpeed = DEFAULT_TURN_FOREVER_SPEED; //amarino.getInt(); // speed goes from 0 to 255
   Serial.println("turning, speed = ");
   Serial.println(mySpeed);
   if (brakesOn) coast();
@@ -336,13 +336,13 @@ void turnRightForever(byte flag, byte numOfValues) // speed goes from 0 to 255
   if (mySpeed == 0 || stopIfFault()) Moving = false;
   else Moving = true;
   char message = 'R';
-  meetAndroid.send(message);
+  amarino.send(message);
   timeOutCheck = millis(); 
 }
 
 void turnRight(byte flag, byte numOfValues) // speed goes from 0 to 255
 {
-  mySpeed = DEFAULT_SPEED; //meetAndroid.getInt(); // speed goes from 0 to 255
+  mySpeed = DEFAULT_SPEED; //amarino.getInt(); // speed goes from 0 to 255
   Serial.println("turning, speed = ");
   Serial.println(mySpeed);
   if (brakesOn) coast();
@@ -350,7 +350,7 @@ void turnRight(byte flag, byte numOfValues) // speed goes from 0 to 255
   if (mySpeed == 0 || stopIfFault()) Moving = false;
   else Moving = true;
   char message = 'r';
-  meetAndroid.send(message);
+  amarino.send(message);
   timeOutCheck = millis();
   delay(200);
   Stop();  
@@ -358,7 +358,7 @@ void turnRight(byte flag, byte numOfValues) // speed goes from 0 to 255
 
 void turnLeftForever(byte flag, byte numOfValues) // speed goes from 0 to 255
 {
-  mySpeed = -DEFAULT_TURN_FOREVER_SPEED; //meetAndroid.getInt(); // speed goes from 0 to 255
+  mySpeed = -DEFAULT_TURN_FOREVER_SPEED; //amarino.getInt(); // speed goes from 0 to 255
   Serial.println("turning, speed = ");
   Serial.println(mySpeed);
   if (brakesOn) coast();
@@ -366,14 +366,14 @@ void turnLeftForever(byte flag, byte numOfValues) // speed goes from 0 to 255
   if (mySpeed == 0 || stopIfFault()) Moving = false;
   else Moving = true;
   char message = 'L';
-  meetAndroid.send(message);
+  amarino.send(message);
   timeOutCheck = millis();
 }
 
 
 void turnLeft(byte flag, byte numOfValues) // speed goes from 0 to 255
 {
-  mySpeed = -DEFAULT_SPEED; //meetAndroid.getInt(); // speed goes from 0 to 255
+  mySpeed = -DEFAULT_SPEED; //amarino.getInt(); // speed goes from 0 to 255
   Serial.println("turning, speed = ");
   Serial.println(mySpeed);
   if (brakesOn) coast();
@@ -381,7 +381,7 @@ void turnLeft(byte flag, byte numOfValues) // speed goes from 0 to 255
   if (mySpeed == 0 || stopIfFault()) Moving = false;
   else Moving = true;
   char message = 'l';
-  meetAndroid.send(message);
+  amarino.send(message);
   timeOutCheck = millis();
   delay(200);
   Stop();    
@@ -396,24 +396,24 @@ void getMotorCurrents()
 void servoUp(byte flag, byte numOfValues)
 {
       Serial.println("Moving servo up");
-      int stepsToGo = 1; //meetAndroid.getInt();
+      int stepsToGo = 1; //amarino.getInt();
       if (tiltPos - (TILT_DELTA *stepsToGo) >= TILT_MIN) tiltPos -= TILT_DELTA * stepsToGo;
       else tiltPos = TILT_MIN;
       tiltServo.write(tiltPos);
       char message = 'u';
-      meetAndroid.send(message);
+      amarino.send(message);
       timeOutCheck = millis();
 }
 
 void servoDown(byte flag, byte numOfValues) 
 {
       Serial.println("Moving servo down");
-      int stepsToGo = 1;//meetAndroid.getInt();
+      int stepsToGo = 1;//amarino.getInt();
       if (tiltPos - (TILT_DELTA * stepsToGo) <= TILT_MAX) tiltPos += TILT_DELTA * stepsToGo;
       else tiltPos = TILT_MAX;
       tiltServo.write(tiltPos);
       char message = 'n';
-      meetAndroid.send(message);
+      amarino.send(message);
       timeOutCheck = millis();
 }
 
@@ -422,7 +422,7 @@ void servoCenter(byte flag, byte numOfValues)
       tiltServo.write(TILT_CENTER);
       tiltPos = TILT_CENTER;
       char message = 'j';
-      meetAndroid.send(message);
+      amarino.send(message);
       timeOutCheck = millis();
 }
 
@@ -431,7 +431,7 @@ void servoMaxDown(byte flag, byte numOfValues)
       tiltPos = TILT_MIN;
       tiltServo.write(tiltPos);
       char message = 'm';
-      meetAndroid.send(message);
+      amarino.send(message);
       timeOutCheck = millis();
 }
 
@@ -442,7 +442,7 @@ void commCheck(byte flag, byte numOfValues)
   const char message[] = "comm check good";  // works
   //long value= 110;
   //int base = 2;  
-  //meetAndroid.send(n,m); // sends 110 in base 2 = 1101110
+  //amarino.send(n,m); // sends 110 in base 2 = 1101110
   
   // to convert a float to a character array:
   //dtostrf(value, width, precision, output);
@@ -452,7 +452,7 @@ void commCheck(byte flag, byte numOfValues)
   //precision is the number of decimal places,
   //and output is the character array to put the results in.
   
-  meetAndroid.send(message);
+  amarino.send(message);
 }
 
  
@@ -472,28 +472,28 @@ void setup()
   
   
   // register callback functions, which will be called when an associated event occurs.
-  meetAndroid.registerFunction(moveForwardaLittle, 't');
-  meetAndroid.registerFunction(moveForward, 'f');
-  meetAndroid.registerFunction(moveForwardForever, 'F');
-  meetAndroid.registerFunction(moveBackwardaLittle, 'g');
-  meetAndroid.registerFunction(moveBackward, 'b');
-  meetAndroid.registerFunction(moveBackwardForever, 'B');  
-  meetAndroid.registerFunction(turnRightForever, 'R'); 
-  meetAndroid.registerFunction(turnRight, 'r');
-  meetAndroid.registerFunction(turnLeft, 'l');
-  meetAndroid.registerFunction(turnLeftForever, 'L');
-  meetAndroid.registerFunction(servoUp, 'u');
-  meetAndroid.registerFunction(servoDown, 'n');  
-  meetAndroid.registerFunction(servoCenter, 'j');
-  meetAndroid.registerFunction(servoMaxDown, 'm');
-  meetAndroid.registerFunction(stopCallback, 'x');
-  meetAndroid.registerFunction(checkBattery, 'p');
-  meetAndroid.registerFunction(commCheck, 'c');
+  amarino.registerFunction(moveForwardaLittle, 't');
+  amarino.registerFunction(moveForward, 'f');
+  amarino.registerFunction(moveForwardForever, 'F');
+  amarino.registerFunction(moveBackwardaLittle, 'g');
+  amarino.registerFunction(moveBackward, 'b');
+  amarino.registerFunction(moveBackwardForever, 'B');  
+  amarino.registerFunction(turnRightForever, 'R'); 
+  amarino.registerFunction(turnRight, 'r');
+  amarino.registerFunction(turnLeft, 'l');
+  amarino.registerFunction(turnLeftForever, 'L');
+  amarino.registerFunction(servoUp, 'u');
+  amarino.registerFunction(servoDown, 'n');  
+  amarino.registerFunction(servoCenter, 'j');
+  amarino.registerFunction(servoMaxDown, 'm');
+  amarino.registerFunction(stopCallback, 'x');
+  amarino.registerFunction(checkBattery, 'p');
+  amarino.registerFunction(commCheck, 'c');
   /*
   int i = 1;
   while(1)
   {
-    meetAndroid.send(i);
+    amarino.send(i);
     if (i > 100) i = 0;
     i++;
     delay(1000);
@@ -503,7 +503,7 @@ void setup()
 
 void loop()
 {
-  meetAndroid.receive(); // you need to keep this in your loop() to receive events
+  amarino.receive(); // you need to keep this in your loop() to receive events
   long currentTime = millis();
   if (currentTime - timeOutCheck > TIMED_OUT && Moving) Stop();  //if we are moving and haven't heard anything in a long time, stop moving
   delay(50); // some delay keeps the tablet or phone from getting too busy with this
