@@ -63,7 +63,9 @@
   // timer 5 pins A,B,C are 44,45,46
   
 #define tiltPin 3
-#define SerialSpeed 57600
+
+#define SERIAL_SPEED 115200
+#define BLUETOOTH_SPEED 115200
 
 #define TIMED_OUT 8000
 #define DEFAULT_SPEED 140
@@ -458,8 +460,8 @@ void commCheck(byte flag, byte numOfValues)
  
 void setup()  
 {
-  Serial.begin(SerialSpeed);
-  Serial1.begin(115200);   // connect to bluetooth on serial1 
+  Serial.begin(SERIAL_SPEED);
+  SERIAL_PORT_BLUETOOTH.begin(BLUETOOTH_SPEED);
   motorDriver.init();
   coast();
   
