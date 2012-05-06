@@ -1,4 +1,4 @@
-#include "threeMotorsPololuBigDriver.h"
+#include "triMotorDriver.h"
 
 // Motors are A: left motor, B: right motor, C: camera motor
 // Serial0 (pins 0 (RX) and 1 (TX)) is used for programming and debugging
@@ -25,25 +25,19 @@
 // we get a value of 107.4 per amp, so full scale 1023 corresponds to 9.52 amps
 // inverting, get a count of 9.3 mA per count
 
-threeMotorsPololuBigDriver::threeMotorsPololuBigDriver()
+triMotorDriver::triMotorDriver()
 {
     // Pin map
-    // pins used are 0,1,3,5,11,13,16,17,18,19,22,24,26,30,32,34,40,42
-    // the analog pins used, A5,A6,A7,A8, are set as #defines in the threeMotorsPololuBigDriver.h file
+    // pins used are 0,1,3,4,5,6,16,17,18,19,22,24,26,30,32,34,40,42
+    // the analog pins used, A5,A6,A7,A8, are set as #defines in the triMotorDriver.h file
     // if we later decide to use the servo library, then pins 9 and 10 will not be available for analogWrite()
-    
-    // had to swap from the original PWMA and PWMC pins 4 and 6 to pins 13 and 3
-    //  and then move ENCA from 3 to 20, to not conflict with
-    // the Pololu big driver, which uses pins 2,4,6,7,8,9,10,12,A0,A1
-    
-    // 
-    // no longer available for I2C is pin 20, but pin 21 is still there (these are also interrupt pins)
-    
+    // available for future use: interrupt pins 2, PWM pins 7 - 13
+    // available for I2C are pins 20 and 21 (these are also interrupt pins)
     IN1A = 22;
     IN2A = 24;
     STATUSA = 26;
     ENABLEAB = 28;
-    PWMA = 13;  // PWM: 0 to 13. Provide 8-bit PWM output with the analogWrite() function.
+    PWMA = 4;  // PWM: 0 to 13. Provide 8-bit PWM output with the analogWrite() function.
     IN1B = 32;
     IN2B = 34;
     STATUSB = 36;
@@ -52,11 +46,11 @@ threeMotorsPololuBigDriver::threeMotorsPololuBigDriver()
     IN2C = 44;
     STATUSC = 46;
     ENABLEC = 48;
-    PWMC = 3;
+    PWMC = 6;
     // interrupt pins on the mega are:
     // 2 (interrupt 0), 3 (interrupt 1), 18 (interrupt 5), 19 (4), 20 (3), and 21 (2)
     // we use them for motor encoders
-    ENCA = 20; 
+    ENCA = 3; 
     ENCB = 18;
     ENCC = 19;
 
@@ -101,7 +95,7 @@ threeMotorsPololuBigDriver::threeMotorsPololuBigDriver()
     analogWrite(PWMC, 0);
 }
 
-void threeMotorsPololuBigDriver::setSpeedA(int speed)
+void triMotorDriver::setSpeedA(int speed)
 {
     digitalWrite(ENABLEAB, HIGH);
     if (speed < 0)
@@ -119,7 +113,7 @@ void threeMotorsPololuBigDriver::setSpeedA(int speed)
     analogWrite(PWMA, speed);
 }
 
-void threeMotorsPololuBigDriver::setSpeedB(int speed)
+void triMotorDriver::setSpeedB(int speed)
 {
     digitalWrite(ENABLEAB, HIGH);
     if (speed < 0)
@@ -137,7 +131,7 @@ void threeMotorsPololuBigDriver::setSpeedB(int speed)
     analogWrite(PWMB, speed);
 }   
 
-void threeMotorsPololuBigDriver::setSpeedC(int speed)
+void triMotorDriver::setSpeedC(int speed)
 {
     digitalWrite(ENABLEC, HIGH);
     if (speed < 0)
@@ -155,7 +149,7 @@ void threeMotorsPololuBigDriver::setSpeedC(int speed)
     analogWrite(PWMC, speed);
 }
 
-void threeMotorsPololuBigDriver::setSpeedAB(int speedA, int speedB)
+void triMotorDriver::setSpeedAB(int speedA, int speedB)
 {
     digitalWrite(ENABLEAB, HIGH);
     if (speedA < 0)
@@ -186,20 +180,20 @@ void threeMotorsPololuBigDriver::setSpeedAB(int speedA, int speedB)
     analogWrite(PWMB, speedB);
 }
 
-void threeMotorsPololuBigDriver::setBrakesAB()
+void triMotorDriver::setBrakesAB()
 {
     digitalWrite(ENABLEAB, LOW);
     analogWrite(PWMA, 0);
     analogWrite(PWMB, 0);
 }
 
-void threeMotorsPololuBigDriver::setBrakesC()
+void triMotorDriver::setBrakesC()
 {
     digitalWrite(ENABLEC, LOW);
     analogWrite(PWMC, 0);
 }
 
-void threeMotorsPololuBigDriver::setCoastA()
+void triMotorDriver::setCoastA()
 {
     digitalWrite(ENABLEAB, HIGH);
     digitalWrite(IN1A, LOW);
@@ -207,7 +201,7 @@ void threeMotorsPololuBigDriver::setCoastA()
     analogWrite(PWMA, 255);   
 }
     
-void threeMotorsPololuBigDriver::setCoastB()
+void triMotorDriver::setCoastB()
 {
     digitalWrite(ENABLEAB, HIGH);
     digitalWrite(IN1B, LOW);
@@ -215,7 +209,7 @@ void threeMotorsPololuBigDriver::setCoastB()
     analogWrite(PWMB, 255);   
 }
 
-void threeMotorsPololuBigDriver::setCoastC()
+void triMotorDriver::setCoastC()
 {
     digitalWrite(ENABLEC, HIGH);
     digitalWrite(IN1C, LOW);
@@ -223,7 +217,7 @@ void threeMotorsPololuBigDriver::setCoastC()
     analogWrite(PWMC, 255);   
 }
 
-void threeMotorsPololuBigDriver::setCoastAB()
+void triMotorDriver::setCoastAB()
 {
     digitalWrite(ENABLEAB, HIGH);
     digitalWrite(IN1A, LOW);
@@ -234,38 +228,38 @@ void threeMotorsPololuBigDriver::setCoastAB()
     analogWrite(PWMB, 255);    
 }
 
-int threeMotorsPololuBigDriver::getCurrentA()  // returns mA
+int triMotorDriver::getCurrentA()  // returns mA
 {
     // 9.3 ma per count, we'll use 10 to stick with integer arithmetic
     return (analogRead(FBA) * 10);
 }
 
-int threeMotorsPololuBigDriver::getCurrentB()
+int triMotorDriver::getCurrentB()
 {
     return (analogRead(FBB) * 10);
 }
 
-int threeMotorsPololuBigDriver::getCurrentC()
+int triMotorDriver::getCurrentC()
 {
     return (analogRead(FBC) * 10);
 }
 
-unsigned char threeMotorsPololuBigDriver::getStatusA()
+unsigned char triMotorDriver::getStatusA()
 {
     return(digitalRead(STATUSA));
 }
 
-unsigned char threeMotorsPololuBigDriver::getStatusB()
+unsigned char triMotorDriver::getStatusB()
 {
     return(digitalRead(STATUSB));
 }
 
-unsigned char threeMotorsPololuBigDriver::getStatusC()
+unsigned char triMotorDriver::getStatusC()
 {
     return(digitalRead(STATUSC));
 }
 
-int threeMotorsPololuBigDriver::getBatteryMonitor() // just returns the analog value, since the voltage depends on the bot's resistors
+int triMotorDriver::getBatteryMonitor() // just returns the analog value, since the voltage depends on the bot's resistors
 {
     return(analogRead(BATTERY_MONITOR));
 }

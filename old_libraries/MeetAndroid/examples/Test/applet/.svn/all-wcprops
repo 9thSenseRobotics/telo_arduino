@@ -1,0 +1,29 @@
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/!svn/ver/1/trunk/arduino_library/MeetAndroid/examples/Test/applet
+END
+Test.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/!svn/ver/1/trunk/arduino_library/MeetAndroid/examples/Test/applet/Test.cpp
+END
+Test.cpp.hex
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/!svn/ver/1/trunk/arduino_library/MeetAndroid/examples/Test/applet/Test.cpp.hex
+END
+Test.cpp.elf
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/!svn/ver/1/trunk/arduino_library/MeetAndroid/examples/Test/applet/Test.cpp.elf
+END
+Test.cpp.eep
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/!svn/ver/1/trunk/arduino_library/MeetAndroid/examples/Test/applet/Test.cpp.eep
+END
