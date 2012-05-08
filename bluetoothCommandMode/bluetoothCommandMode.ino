@@ -56,7 +56,7 @@ void setup()
    
   Serial.println("Note: $$$ is the command to go to command mode.");   
   Serial.println("Connected.  Power cycle the bluetooth module.");
-  Serial.println("When you are ready, send E$ to enter command mode: ");
+  Serial.println("When you are ready, send E# to enter command mode: ");
   while (!Serial.available());
   Serial.println("Going into command mode, wait for data to showup, then test with D#");
    
