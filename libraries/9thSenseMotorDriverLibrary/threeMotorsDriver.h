@@ -1,19 +1,19 @@
-#ifndef threeMotorsPololuBigDriver_h
-#define threeMotorsPololuBigDriver_h
+#ifndef threeMotorsDriver_h
+#define threeMotorsDriver_h
 
 #include <Arduino.h>
 
 // analog inputs
-#define BATTERY_MONITOR A5
-#define FBA A6
-#define FBB A7
-#define FBC A8
+#define BATTERY_MONITOR A4
+#define FBA A5
+#define FBB A6
+#define FBC A7
     
-class threeMotorsPololuBigDriver
+class threeMotorsDriver
 {
   public:  
     // CONSTRUCTOR
-    threeMotorsPololuBigDriver(); // pin selection an initial config
+    threeMotorsDriver(); // pin selection an initial config
     
     // PUBLIC METHODS
     void setSpeedA(int speed); // Set speed for left motor

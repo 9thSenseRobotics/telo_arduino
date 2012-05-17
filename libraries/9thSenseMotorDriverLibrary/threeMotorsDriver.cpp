@@ -18,12 +18,26 @@
 // So our jumper overrides are as follows:
 // D1 to GND
 // INVERT to GND, since we are using both IN1 and IN2 (so we can coast)
-//
+// since the only jumper connections we are making are to ground, we do not need a connection to Vdd
+// Also, since we will have +12V going into the large Vin port, we do not need a connection to the small Vin pin
 // For feedback, When running in the forward or reverse direction, a ground-referenced 0.24% of load current
 // is output to the FB pin.  Since our board uses a 200 ohm resistor to ground from this pin, we get about
 // 525 mV per amp on that pin.  Since the analog range is 0 to 1023 corresponding to 0 to 5V, or 4.89 mV per analog value,
 // we get a value of 107.4 per amp, so full scale 1023 corresponds to 9.52 amps
 // inverting, get a count of 9.3 mA per count
+//
+//
+// wiring standards:
+// red = +12
+// black = ground
+// yellow = +5
+// white = motorA outside
+// blue = motorA inside
+// grey = motorB outside
+// green = motor B inside
+// orange = motorC outside
+// violet = motorC inside
+
 
 threeMotorsDriver::threeMotorsDriver()
 {
