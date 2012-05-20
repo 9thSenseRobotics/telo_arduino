@@ -4,7 +4,6 @@
 #include <Arduino.h>
 
 // analog inputs
-#define BATTERY_MONITOR A4
 #define FBA A5
 #define FBB A6
 #define FBC A7
@@ -32,7 +31,6 @@ class threeMotorsDriver
     unsigned char getStatusA(); // Get status of left motor
     unsigned char getStatusB(); // Get status of right motor
     unsigned char getStatusC(); // Get status of top motor
-    int getBatteryMonitor();
     
   private:
     unsigned char IN1A;

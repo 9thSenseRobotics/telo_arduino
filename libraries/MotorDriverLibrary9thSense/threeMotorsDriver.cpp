@@ -273,10 +273,5 @@ unsigned char threeMotorsDriver::getStatusC()
     return(digitalRead(STATUSC));
 }
 
-int threeMotorsDriver::getBatteryMonitor() // just returns the analog value, since the voltage depends on the bot's resistors
-{
-    return(analogRead(BATTERY_MONITOR));
-}
-
 
 
