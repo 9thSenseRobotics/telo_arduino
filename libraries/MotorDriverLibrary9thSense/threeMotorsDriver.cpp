@@ -25,6 +25,22 @@
 // 525 mV per amp on that pin.  Since the analog range is 0 to 1023 corresponding to 0 to 5V, or 4.89 mV per analog value,
 // we get a value of 107.4 per amp, so full scale 1023 corresponds to 9.52 amps
 // inverting, get a count of 9.3 mA per count
+
+// for the encoders, note that the timers on the mega:
+// timer 0 pins A,B are 13,4
+// timer 1 pins A,B are 11,12
+// timer 2 pins A,B are 10,9  
+// timer 3 pins A,B,C are 5,2,3
+// timer 4 pins A,B,C are 6,7,8
+// timer 5 pins A,B,C are 44,45,46
+
+// for the battery monitor, hook it up with the + side soldered to Vout on the motor driver (+12)
+// the negative side to ground and the middle to A4.  With the battery attached, 
+// measure the voltage on Vout and divide it by the voltage on A4
+// and enter that into the arduino sketch as the parameter VOLTAGE_DIVIDER_RATIO (assuming 22K and 10K resistors,
+// the value should be 3.2)
+// Also measure the fully charged battery value and enter that with the discharged value into the parameters
+// FULL_BATTERY_VOLTAGE and ZERO_PERCENT_BATTERY_VOLTAGE
 //
 //
 // wiring standards:
