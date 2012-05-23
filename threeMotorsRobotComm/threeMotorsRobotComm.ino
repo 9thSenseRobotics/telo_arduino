@@ -94,20 +94,20 @@ bool stopIfFault()
   if (motorDriver.getStatusA())
   {
       motorDriver.setBrakesAB();
-      Serial.println("Fault detected in left motor ");
+      SERIAL_PORT.println("Fault detected in left motor ");
       result = true;
   }
   if (motorDriver.getStatusB())
   {
       motorDriver.setBrakesAB();
-      Serial.println("Fault detected in right motor ");
+      SERIAL_PORT.println("Fault detected in right motor ");
       result = true;
   }
   
   if (motorDriver.getStatusC())
   {
       motorDriver.setBrakesC();
-      Serial.println("Fault detected in top motor ");
+      SERIAL_PORT.println("Fault detected in top motor ");
       result = true;
   }
   return result;
@@ -140,8 +140,8 @@ void accelerate(int targetSpeed)
     while (goSpeed < targetSpeed - DELTA_SPEED)
     {
       motorDriver.setSpeedAB(goSpeed + LEFT_MOTOR_BIAS,goSpeed);
-      //Serial.println("moving, speed = ");
-      //Serial.println(goSpeed);
+      //SERIAL_PORT.println("moving, speed = ");
+      //SERIAL_PORT.println(goSpeed);
       goSpeed += DELTA_SPEED;
       delay(ACCEL_DELAY);
     }
@@ -152,8 +152,8 @@ void accelerate(int targetSpeed)
     while (goSpeed < targetSpeed - DELTA_SPEED)
     {
       motorDriver.setSpeedAB(-goSpeed - LEFT_MOTOR_BIAS,-goSpeed);
-      //Serial.println("moving, speed = ");
-      //Serial.println(-goSpeed);
+      //SERIAL_PORT.println("moving, speed = ");
+      //SERIAL_PORT.println(-goSpeed);
       goSpeed += DELTA_SPEED;
       delay(ACCEL_DELAY);
     }
@@ -169,8 +169,8 @@ void decelerate(int initialSpeed)
     while (goSpeed > MIN_DECEL_SPEED + DELTA_SPEED)
     {
       motorDriver.setSpeedAB(goSpeed + LEFT_MOTOR_BIAS, goSpeed);
-      //Serial.println("moving, speed = ");
-      //Serial.println(goSpeed);
+      //SERIAL_PORT.println("moving, speed = ");
+      //SERIAL_PORT.println(goSpeed);
       goSpeed -= DELTA_SPEED;
       delay(ACCEL_DELAY);
     }
@@ -182,8 +182,8 @@ void decelerate(int initialSpeed)
     while (goSpeed > MIN_DECEL_SPEED + DELTA_SPEED)
     {
       motorDriver.setSpeedAB(-goSpeed - LEFT_MOTOR_BIAS, -goSpeed);
-      //Serial.println("moving, speed = ");
-      //Serial.println(-goSpeed);
+      //SERIAL_PORT.println("moving, speed = ");
+      //SERIAL_PORT.println(-goSpeed);
       goSpeed -= DELTA_SPEED;
       delay(ACCEL_DELAY);
     }
@@ -195,9 +195,9 @@ void decelerate(int initialSpeed)
 
 void moveForwardaLittle(int mySpeed)
 {
-  mySpeed = DEFAULT_SPEED;  // speed goes from 0 to 255
-  Serial.print("moving, speed = ");
-  Serial.println(mySpeed);
+  //mySpeed = DEFAULT_SPEED;  // speed goes from 0 to 255
+  SERIAL_PORT.print("moving, speed = ");
+  SERIAL_PORT.println(mySpeed);
   if (brakesOn) coast();
   motorDriver.setSpeedAB(mySpeed + LEFT_MOTOR_BIAS, mySpeed);
   if (mySpeed == 0 || stopIfFault()) Moving = false;
@@ -209,9 +209,9 @@ void moveForwardaLittle(int mySpeed)
 
 void moveForward(int mySpeed)
 {
-  mySpeed = DEFAULT_SPEED;  // speed goes from 0 to 255
-  Serial.print("moving, speed = ");
-  Serial.println(mySpeed);
+  //mySpeed = DEFAULT_SPEED;  // speed goes from 0 to 255
+  SERIAL_PORT.print("moving, speed = ");
+  SERIAL_PORT.println(mySpeed);
   if (brakesOn) coast();
 //  accelerate(mySpeed);
   motorDriver.setSpeedAB(mySpeed + LEFT_MOTOR_BIAS, mySpeed);
@@ -225,9 +225,9 @@ void moveForward(int mySpeed)
 
 void moveForwardForever(int mySpeed)
 {
-  mySpeed = DEFAULT_SPEED;  // speed goes from 0 to 255
-  Serial.print("moving, speed = ");
-  Serial.println(mySpeed);
+  //mySpeed = DEFAULT_SPEED;  // speed goes from 0 to 255
+  SERIAL_PORT.print("moving, speed = ");
+  SERIAL_PORT.println(mySpeed);
   if (brakesOn) coast();
 //  accelerate(mySpeed);
   motorDriver.setSpeedAB(mySpeed + LEFT_MOTOR_BIAS, mySpeed);
@@ -239,8 +239,8 @@ void moveForwardForever(int mySpeed)
 void moveBackwardaLittle(int mySpeed)
 {
   mySpeed = -DEFAULT_SPEED + BW_REDUCTION;  // speed goes from 0 to 255
-  Serial.print("moving, speed = ");
-  Serial.println(mySpeed);
+  SERIAL_PORT.print("moving, speed = ");
+  SERIAL_PORT.println(mySpeed);
   if (brakesOn) coast();
   //accelerate(mySpeed);
   motorDriver.setSpeedAB(mySpeed - LEFT_MOTOR_BW_BIAS, mySpeed);
@@ -255,8 +255,8 @@ void moveBackwardaLittle(int mySpeed)
 void moveBackward(int mySpeed)
 {
   mySpeed = -DEFAULT_SPEED + BW_REDUCTION;  // speed goes from 0 to 255// backward should be slower than forward
-  Serial.print("moving, speed = ");
-  Serial.println(mySpeed);
+  SERIAL_PORT.print("moving, speed = ");
+  SERIAL_PORT.println(mySpeed);
   if (brakesOn) coast();
   //accelerate(mySpeed);
   motorDriver.setSpeedAB(mySpeed - LEFT_MOTOR_BW_BIAS, mySpeed);
@@ -271,8 +271,8 @@ void moveBackward(int mySpeed)
 void moveBackwardForever(int mySpeed)
 {
   mySpeed = -DEFAULT_SPEED + BW_REDUCTION;  // speed goes from 0 to 255 // backward should be slower than forward
-  Serial.print("moving, speed = ");
-  Serial.println(mySpeed);
+  SERIAL_PORT.print("moving, speed = ");
+  SERIAL_PORT.println(mySpeed);
   if (brakesOn) coast();
   //accelerate(mySpeed);
   motorDriver.setSpeedAB(mySpeed - LEFT_MOTOR_BW_BIAS, mySpeed);
@@ -284,8 +284,8 @@ void moveBackwardForever(int mySpeed)
 void turnRightForever(int mySpeed) // speed goes from 0 to 255
 {
   mySpeed = -DEFAULT_TURN_FOREVER_SPEED; 
-  Serial.print("turning, speed = ");
-  Serial.println(mySpeed);
+  SERIAL_PORT.print("turning, speed = ");
+  SERIAL_PORT.println(mySpeed);
   if (brakesOn) coast();
   motorDriver.setSpeedAB(mySpeed, -mySpeed);
   if (mySpeed == 0 || stopIfFault()) Moving = false;
@@ -296,8 +296,8 @@ void turnRightForever(int mySpeed) // speed goes from 0 to 255
 void turnRight(int mySpeed) // speed goes from 0 to 255
 {
   mySpeed = -DEFAULT_SPEED;  
-  Serial.print("turning, speed = ");
-  Serial.println(mySpeed);
+  SERIAL_PORT.print("turning, speed = ");
+  SERIAL_PORT.println(mySpeed);
   if (brakesOn) coast();
   motorDriver.setSpeedAB(mySpeed,-mySpeed);
   if (mySpeed == 0 || stopIfFault()) Moving = false;
@@ -310,8 +310,8 @@ void turnRight(int mySpeed) // speed goes from 0 to 255
 void turnLeftForever(int mySpeed) // speed goes from 0 to 255
 {
   mySpeed = DEFAULT_TURN_FOREVER_SPEED; 
-  Serial.print("turning, speed = ");
-  Serial.println(mySpeed);
+  SERIAL_PORT.print("turning, speed = ");
+  SERIAL_PORT.println(mySpeed);
   if (brakesOn) coast();
   motorDriver.setSpeedAB(mySpeed,-mySpeed);
   if (mySpeed == 0 || stopIfFault()) Moving = false;
@@ -323,8 +323,8 @@ void turnLeftForever(int mySpeed) // speed goes from 0 to 255
 void turnLeft(int mySpeed) // speed goes from 0 to 255
 {
   mySpeed = DEFAULT_SPEED; 
-  Serial.print("turning, speed = ");
-  Serial.println(mySpeed);
+  SERIAL_PORT.print("turning, speed = ");
+  SERIAL_PORT.println(mySpeed);
   if (brakesOn) coast();
   motorDriver.setSpeedAB(mySpeed, -mySpeed);
   if (mySpeed == 0 || stopIfFault()) Moving = false;
@@ -339,8 +339,8 @@ void tiltUp(int myDistance) // distance goes from 0 to 255
 {
   myDistance = TILT_TIME;
   mySpeed = DEFAULT_TILT_SPEED; 
-  Serial.print("tilting up, distance = ");
-  Serial.println(myDistance);
+  SERIAL_PORT.print("tilting up, distance = ");
+  SERIAL_PORT.println(myDistance);
   motorDriver.setSpeedC(mySpeed);
   //if (mySpeed == 0 || stopIfFault()) Moving = false;
   //else Moving = true;
@@ -354,8 +354,8 @@ void tiltDown(int myDistance) // distance goes from 0 to 255
 {
   myDistance = TILT_TIME;
   mySpeed = -DEFAULT_TILT_SPEED; 
-  Serial.print("tilting dwon, distance = ");
-  Serial.println(myDistance);
+  SERIAL_PORT.print("tilting dwon, distance = ");
+  SERIAL_PORT.println(myDistance);
   motorDriver.setSpeedC(mySpeed);
   //if (mySpeed == 0 || stopIfFault()) Moving = false;
   //else Moving = true;
@@ -435,14 +435,15 @@ void HandleCommand(char* input, int length)
       checkBattery(); // note that this writes a single char, so value should be in range 0-255
       break;    
     default:
-      Serial.println("did not recognize command ");
+      SERIAL_PORT.println("did not recognize command ");
       break;
   }
 } 
  
 void setup()  
 {
-  Serial.begin(SERIAL_SPEED);
+  SERIAL_PORT.begin(SERIAL_SPEED);
+  SERIAL_PORT.println("ready for commands");
   SERIAL_PORT_BLUETOOTH.begin(BLUETOOTH_SPEED);   // usually connect to bluetooth on serial2
   motorDriver.setCoastAB();
   motorDriver.setBrakesC();
@@ -450,6 +451,7 @@ void setup()
   batteryRange = FULL_BATTERY_VOLTAGE - ZERO_PERCENT_BATTERY_VOLTAGE;
   
   for (int i=0; i< INPUT_BUFFER_SIZE; i++) inputBuffer[i] = 0;
+  
   
 }
 
@@ -469,6 +471,7 @@ void loop()
     {
        inputBuffer[inputLength] = charIn;
        inputLength++;
+       //SERIAL_PORT.print(charIn);
     }
   } 
   
@@ -479,8 +482,8 @@ void loop()
   inputLength -= 1;  // -1 because it is incremented after the last character
   inputBuffer[inputLength] = 0;  // change COMMAND_END_CHARACTER to a 0 (remember, index is one behind inputLength)
   
-  Serial.print("Received command: ");
-  Serial.println(inputBuffer);
+ // SERIAL_PORT.print("commanded: ");
+ // SERIAL_PORT.println(inputBuffer);
 
   // if the command == 'c' it is just a comm check
   if (inputBuffer[0] != 'c' && inputLength > 0) HandleCommand(inputBuffer, inputLength);
