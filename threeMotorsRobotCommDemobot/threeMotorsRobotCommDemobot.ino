@@ -35,7 +35,7 @@
 // if there is no number, then the servo will just move by one step (TILT_DELTA)
 // U#
 
-#include <threeMotorsDriverDemo.h> 
+#include <threeMotorsDriver.h> 
 
 #define SERIAL_PORT Serial
 #define SERIAL_PORT_BLUETOOTH Serial2
