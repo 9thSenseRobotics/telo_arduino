@@ -35,12 +35,12 @@
 // if there is no number, then the servo will just move by one step (TILT_DELTA)
 // U#
 
-#include <threeMotorsDriverDemo.h> 
+#include <threeMotorsDriver.h> 
 
 #define SERIAL_PORT Serial
 #define SERIAL_PORT_BLUETOOTH Serial2
 #define SERIAL_SPEED 115200
-#define BLUETOOTH_SPEED 57600
+#define BLUETOOTH_SPEED 115200
 #define INPUT_BUFFER_SIZE 256
 #define COMMAND_END_CHARACTER '#'
 #define TIMED_OUT 8000
@@ -65,7 +65,7 @@
 //#define TILT_MAX 165
 //#define TILT_DELTA 10
 
-#define BATTERY_MONITOR_PIN A5
+#define BATTERY_MONITOR_PIN A4
 #define ZERO_PERCENT_BATTERY_VOLTAGE 10.5
 #define FULL_BATTERY_VOLTAGE 13.0
 #define VOLTAGE_DIVIDER_RATIO 8.21
