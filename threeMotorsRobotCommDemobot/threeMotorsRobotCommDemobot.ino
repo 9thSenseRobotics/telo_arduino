@@ -1,3 +1,4 @@
+
 // accepts serial port inputs and responds with moves and tilts
 // requires a Mega to work, not an Uno or Nano, due to the need for two serial inputs
 
@@ -35,7 +36,7 @@
 // if there is no number, then the servo will just move by one step (TILT_DELTA)
 // U#
 
-#include <threeMotorsDriver.h> 
+#include <threeMotorsPololuBigDriver.h>
 
 #define SERIAL_PORT Serial
 #define SERIAL_PORT_BLUETOOTH Serial2
@@ -70,7 +71,7 @@
 #define FULL_BATTERY_VOLTAGE 13.0
 #define VOLTAGE_DIVIDER_RATIO 8.21
 
-threeMotorsDriver motorDriver;
+threeMotorsPololuBigDriver motorDriver;
 
 char inputBuffer[INPUT_BUFFER_SIZE], charIn;
 int tiltPos, inputLength, mySpeed; 

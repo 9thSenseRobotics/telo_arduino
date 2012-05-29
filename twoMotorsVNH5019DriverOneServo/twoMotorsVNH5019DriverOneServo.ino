@@ -1,50 +1,78 @@
-// accepts serial port inputs and responds with moves and tilts
-// requires a Mega to work, not an Uno or Nano, due to the need for two serial inputs
+
+
+// accepts serial port inputs and responds with moves and servos
+// requires a Mega to work, not an Uno or Nano, due to conflicts with the pololu motor board
+// and the servo library (both want exclusive use of pins 9 and 10).
 
 // wiring:
-// motor A is the left motor, motor B the right.
+// motor 1 is the right motor, motor2 the left.
 // hook them both up so that the outside wire from the motor goes into the outside terminal
 // that corresponds to M1A for the right motor, M2B for the left motor
-// see the comments in threeMotorsDriver.cpp for details.
 
 // for the battery monitor, hook it up with the + side soldered to Vout on the motor driver (+12)
-// the negative side to ground and the middle to A4.  With the battery attached, 
-// measure the voltage on Vout and divide it by the voltage on A4
+// the negative side to ground and the middle to A5.  With the battery attached, 
+// measure the voltage on Vout and divide it by the voltage on A5
 // and enter that as the parameter VOLTAGE_DIVIDER_RATIO (assuming 22K and 10K resistors, the value should be 3.2)
 // Also measure the fully charged battery value and enter that with the discharged value into the parameters
 // FULL_BATTERY_VOLTAGE and ZERO_PERCENT_BATTERY_VOLTAGE
 
 // command form is a letter for direction:
-// f,b,r,d = move forward, move backward, right turn, left turn.
-// upper case means move forever
-// t,g move forward or back a little
+// W, S, A, D, = move forward, move backward, right turn, left turn.
+// case does not matter, so w, a, s, d are OK
 // followed by the speed to move, 0 to 255
 // followed by a character to indicate that the input is complete, in our case that character is #
-// for example, move forward with a speed of 200 is
-// f200#
+// for example, move with a speed of 200 is
+// W200#
 // to turn right at full speed is
-// r255#
+// D255#
 // if you wish to use the default speed (a defined value), then just the letters is sufficient:
-// r#
+// D#
 // 
-// for tilting
-// u, n = move up, down
+// for servos
+// U, N, K, H = move up, down, right, left
 // J to center and M for max down
 // followed by the number of steps to take, for example, to move 2 steps up:
 // U2#
-// if there is no number, then the servo will just move by one step (TILT_DELTA)
+// if there is no number, then the servo will just move by one step (TILT_DELTA or PAN_DELTA)
 // U#
 
-#include <threeMotorsDriver.h> 
+#include <DualVNH5019MotorShield.h>
+#include <Servo.h> 
+
+// pins 0 and 1 are used for serial comm with the laptop
+// pins used by the pololu shield are the following:
+// motor1_inA pin 2
+// motor1_inB pin 4
+// motor2_inA pin 7
+// motor2_inB pin 8
+// motor1_PWM pin 9
+// motor2_PWM pin 10
+// motor1 diagnostic pin 6
+// motor2 diagnostic pin 12
+// motor1 current out pin A0
+// motor2 current out pin A1
+// charging detection pin 13
+
+// timers on the mega:
+  // timer 0 pins A,B are 13,4
+  // timer 1 pins A,B are 11,12
+  // timer 2 pins A,B are 10,9  
+  // timer 3 pins A,B,C are 5,2,3
+  // timer 4 pins A,B,C are 6,7,8
+  // timer 5 pins A,B,C are 44,45,46
+  
+#define tiltPin 3
 
 #define SERIAL_PORT Serial
 #define SERIAL_PORT_BLUETOOTH Serial2
 #define SERIAL_SPEED 115200
 #define BLUETOOTH_SPEED 115200
+
 #define INPUT_BUFFER_SIZE 256
 #define COMMAND_END_CHARACTER '#'
 #define COMM_CHECK_CHARACTER 'c'
 #define MESSAGE_BATTERY_PERCENT mb
+
 #define TIMED_OUT 8000
 #define DEFAULT_SPEED 220
 #define BW_REDUCTION 50
@@ -61,24 +89,29 @@
 #define LEFT_MOTOR_BW_BIAS 23
 #define LEFT_MOTOR_STOP_DELAY 0
 
-//#define TILT_CENTER 85
-//#define TILT_LOOK_DOWN 135
-//#define TILT_MIN 55
-//#define TILT_MAX 165
-//#define TILT_DELTA 10
+#define TILT_CENTER 85
+#define TILT_LOOK_DOWN 135
+#define TILT_MIN 55
+#define TILT_MAX 165
+#define TILT_DELTA 10
 
 #define BATTERY_MONITOR_PIN A4
 #define ZERO_PERCENT_BATTERY_VOLTAGE 10.5
 #define FULL_BATTERY_VOLTAGE 13.0
 #define VOLTAGE_DIVIDER_RATIO 8.21
 
-threeMotorsDriver motorDriver;
+#define MOTOR_DRIVER_MAX 400
+#define MOTOR_DRIVER_MIN -400
 
+DualVNH5019MotorShield motorDriver;
+
+Servo tiltServo;  // create servo objects to control the servos
 char inputBuffer[INPUT_BUFFER_SIZE], charIn;
 int tiltPos, inputLength, mySpeed;
 bool Moving, brakesOn;
 long timeOutCheck;
 float batteryRange;
+
 
 void checkBattery()
 {
@@ -93,26 +126,29 @@ void checkBattery()
   SERIAL_PORT_BLUETOOTH.println(batteryPercent); 
 } 
 
+
+// pololu driver goes from -400 to 400, but our input goes from -255 to 255, so ew have to convert the values
+// this is a custom form of the arduino map function
+int convert(int x)
+{
+  //return (x - BYTE_VALUE_MIN) * (MOTOR_DRIVER_MAX - MOTOR_DRIVER_MIN) / (BYTE_VALUE_MAX - BYTE_VALUE_MIN) + MOTOR_DRIVER_MIN;
+  //return (x + 255) * 800 / 510) - 400;
+  return (int) ( (((float)(x + 255)) * 1.57 ) ) - 400;
+}
+
 bool stopIfFault()
 {
   bool result = false;
-  if (motorDriver.getStatusA())
+  if (motorDriver.getM1Fault())
   {
-      motorDriver.setBrakesAB();
-      SERIAL_PORT.println("Fault detected in left motor ");
+      motorDriver.setSpeeds(0,0);
+      Serial.println("Fault detected in Motor 1 ");
       result = true;
   }
-  if (motorDriver.getStatusB())
+  if (motorDriver.getM2Fault())
   {
-      motorDriver.setBrakesAB();
-      SERIAL_PORT.println("Fault detected in right motor ");
-      result = true;
-  }
-  
-  if (motorDriver.getStatusC())
-  {
-      motorDriver.setBrakesC();
-      SERIAL_PORT.println("Fault detected in top motor ");
+      motorDriver.setSpeeds(0,0);
+      Serial.println("Fault detected in Motor 2 ");
       result = true;
   }
   return result;
@@ -120,19 +156,20 @@ bool stopIfFault()
 
 void coast()
 {
-  motorDriver.setCoastAB();
+  motorDriver.setBrakes(0,0);
   brakesOn = false;
 }
 
 void brakes()
 {
-  motorDriver.setBrakesAB();
+  motorDriver.setBrakes(MOTOR_DRIVER_MAX, MOTOR_DRIVER_MAX);
   brakesOn = true;
 }
 
 void Stop()
 {
-  motorDriver.setBrakesAB();
+  motorDriver.setSpeeds(0,0);
+  brakes();
   brakesOn = true;
   Moving = false;
 }
@@ -144,9 +181,9 @@ void accelerate(int targetSpeed)
   {
     while (goSpeed < targetSpeed - DELTA_SPEED)
     {
-      motorDriver.setSpeedAB(goSpeed + LEFT_MOTOR_BIAS,goSpeed);
-      //SERIAL_PORT.println("moving, speed = ");
-      //SERIAL_PORT.println(goSpeed);
+      motorDriver.setSpeeds(convert(goSpeed + LEFT_MOTOR_BIAS), convert(goSpeed));
+      //Serial.println("moving, speed = ");
+      //Serial.println(goSpeed);
       goSpeed += DELTA_SPEED;
       delay(ACCEL_DELAY);
     }
@@ -156,9 +193,9 @@ void accelerate(int targetSpeed)
     targetSpeed = -targetSpeed;
     while (goSpeed < targetSpeed - DELTA_SPEED)
     {
-      motorDriver.setSpeedAB(-goSpeed - LEFT_MOTOR_BIAS,-goSpeed);
-      //SERIAL_PORT.println("moving, speed = ");
-      //SERIAL_PORT.println(-goSpeed);
+      motorDriver.setSpeeds(convert(-goSpeed - LEFT_MOTOR_BIAS), convert(-goSpeed));
+      //Serial.println("moving, speed = ");
+      //Serial.println(-goSpeed);
       goSpeed += DELTA_SPEED;
       delay(ACCEL_DELAY);
     }
@@ -173,9 +210,9 @@ void decelerate(int initialSpeed)
     goSpeed = initialSpeed - DELTA_SPEED;
     while (goSpeed > MIN_DECEL_SPEED + DELTA_SPEED)
     {
-      motorDriver.setSpeedAB(goSpeed + LEFT_MOTOR_BIAS, goSpeed);
-      //SERIAL_PORT.println("moving, speed = ");
-      //SERIAL_PORT.println(goSpeed);
+      motorDriver.setSpeeds(convert(goSpeed + LEFT_MOTOR_BIAS), convert(goSpeed));
+      //Serial.println("moving, speed = ");
+      //Serial.println(goSpeed);
       goSpeed -= DELTA_SPEED;
       delay(ACCEL_DELAY);
     }
@@ -186,9 +223,9 @@ void decelerate(int initialSpeed)
     goSpeed = initialSpeed - DELTA_SPEED;
     while (goSpeed > MIN_DECEL_SPEED + DELTA_SPEED)
     {
-      motorDriver.setSpeedAB(-goSpeed - LEFT_MOTOR_BIAS, -goSpeed);
-      //SERIAL_PORT.println("moving, speed = ");
-      //SERIAL_PORT.println(-goSpeed);
+      motorDriver.setSpeeds(convert(-goSpeed - LEFT_MOTOR_BIAS), convert(-goSpeed));
+      //Serial.println("moving, speed = ");
+      //Serial.println(-goSpeed);
       goSpeed -= DELTA_SPEED;
       delay(ACCEL_DELAY);
     }
@@ -204,7 +241,7 @@ void moveForwardaLittle(int mySpeed)
   SERIAL_PORT.print("moving, speed = ");
   SERIAL_PORT.println(mySpeed);
   if (brakesOn) coast();
-  motorDriver.setSpeedAB(mySpeed + LEFT_MOTOR_BIAS, mySpeed);
+  motorDriver.setSpeeds(convert(mySpeed + LEFT_MOTOR_BIAS), convert(mySpeed));
   if (mySpeed == 0 || stopIfFault()) Moving = false;
   else Moving = true;
   timeOutCheck = millis();
@@ -219,12 +256,12 @@ void moveForward(int mySpeed)
   SERIAL_PORT.println(mySpeed);
   if (brakesOn) coast();
 //  accelerate(mySpeed);
-  motorDriver.setSpeedAB(mySpeed + LEFT_MOTOR_BIAS, mySpeed);
+  motorDriver.setSpeeds(convert(mySpeed + LEFT_MOTOR_BIAS), convert(mySpeed));
   if (mySpeed == 0 || stopIfFault()) Moving = false;
   else Moving = true;
   timeOutCheck = millis();
   delay(MOVE_TIME);
-//  decelerate(mySpeed);
+  decelerate(mySpeed);
   Stop();
 }
 
@@ -235,10 +272,10 @@ void moveForwardForever(int mySpeed)
   SERIAL_PORT.println(mySpeed);
   if (brakesOn) coast();
 //  accelerate(mySpeed);
-  motorDriver.setSpeedAB(mySpeed + LEFT_MOTOR_BIAS, mySpeed);
+  motorDriver.setSpeeds(convert(mySpeed + LEFT_MOTOR_BIAS), convert(mySpeed));
   if (mySpeed == 0 || stopIfFault()) Moving = false;
   else Moving = true;
-  timeOutCheck = millis(); 
+  timeOutCheck = millis();
 }
 
 void moveBackwardaLittle(int mySpeed)
@@ -248,12 +285,12 @@ void moveBackwardaLittle(int mySpeed)
   SERIAL_PORT.println(mySpeed);
   if (brakesOn) coast();
   //accelerate(mySpeed);
-  motorDriver.setSpeedAB(mySpeed - LEFT_MOTOR_BW_BIAS, mySpeed);
+  motorDriver.setSpeeds(convert(mySpeed - LEFT_MOTOR_BIAS), convert(mySpeed));
   if (mySpeed == 0 || stopIfFault()) Moving = false;
   else Moving = true;
   timeOutCheck = millis();
   delay(300);
-  //decelerate(mySpeed);
+  decelerate(mySpeed);
   Stop();
 }
 
@@ -264,35 +301,34 @@ void moveBackward(int mySpeed)
   SERIAL_PORT.println(mySpeed);
   if (brakesOn) coast();
   //accelerate(mySpeed);
-  motorDriver.setSpeedAB(mySpeed - LEFT_MOTOR_BW_BIAS, mySpeed);
+  motorDriver.setSpeeds(convert(mySpeed - LEFT_MOTOR_BIAS), convert(mySpeed));
   if (mySpeed == 0 || stopIfFault()) Moving = false;
   else Moving = true;
   timeOutCheck = millis();
   delay(MOVE_TIME);
-  //decelerate(mySpeed);
+  decelerate(mySpeed);
   Stop();
 }
 
 void moveBackwardForever(int mySpeed)
 {
-  mySpeed = -DEFAULT_SPEED + BW_REDUCTION;  // speed goes from 0 to 255 // backward should be slower than forward
+  mySpeed = -mySpeed;
   SERIAL_PORT.print("moving, speed = ");
   SERIAL_PORT.println(mySpeed);
   if (brakesOn) coast();
   //accelerate(mySpeed);
-  motorDriver.setSpeedAB(mySpeed - LEFT_MOTOR_BW_BIAS, mySpeed);
+  motorDriver.setSpeeds(convert(mySpeed - LEFT_MOTOR_BIAS), convert(mySpeed));
   if (mySpeed == 0 || stopIfFault()) Moving = false;
   else Moving = true;
   timeOutCheck = millis();
 }
-
-void turnRightForever(int mySpeed) // speed goes from 0 to 255
+void turnRightForever(int mySpeed) 
 {
   mySpeed = -DEFAULT_TURN_FOREVER_SPEED; 
   SERIAL_PORT.print("turning, speed = ");
   SERIAL_PORT.println(mySpeed);
   if (brakesOn) coast();
-  motorDriver.setSpeedAB(mySpeed, -mySpeed);
+  motorDriver.setSpeeds(convert(mySpeed), convert(-mySpeed));
   if (mySpeed == 0 || stopIfFault()) Moving = false;
   else Moving = true;
   timeOutCheck = millis(); 
@@ -300,25 +336,24 @@ void turnRightForever(int mySpeed) // speed goes from 0 to 255
 
 void turnRight(int mySpeed) // speed goes from 0 to 255
 {
-  mySpeed = -DEFAULT_SPEED;  
+  mySpeed = -mySpeed;  
   SERIAL_PORT.print("turning, speed = ");
   SERIAL_PORT.println(mySpeed);
   if (brakesOn) coast();
-  motorDriver.setSpeedAB(mySpeed,-mySpeed);
+  motorDriver.setSpeeds(convert(mySpeed), convert(-mySpeed));
   if (mySpeed == 0 || stopIfFault()) Moving = false;
-  else Moving = true;
   timeOutCheck = millis();
   delay(200);
   Stop();  
 }
 
-void turnLeftForever(int mySpeed) // speed goes from 0 to 255
+void turnLeftForever(int mySpeed) 
 {
   mySpeed = DEFAULT_TURN_FOREVER_SPEED; 
-  SERIAL_PORT.print("turning, speed = ");
-  SERIAL_PORT.println(mySpeed);
+  Serial.println("turning, speed = ");
+  Serial.println(mySpeed);
   if (brakesOn) coast();
-  motorDriver.setSpeedAB(mySpeed,-mySpeed);
+  motorDriver.setSpeeds(convert(mySpeed), convert(-mySpeed));
   if (mySpeed == 0 || stopIfFault()) Moving = false;
   else Moving = true;
   timeOutCheck = millis();
@@ -327,11 +362,11 @@ void turnLeftForever(int mySpeed) // speed goes from 0 to 255
 
 void turnLeft(int mySpeed) // speed goes from 0 to 255
 {
-  mySpeed = DEFAULT_SPEED; 
-  SERIAL_PORT.print("turning, speed = ");
-  SERIAL_PORT.println(mySpeed);
+  mySpeed = DEFAULT_TURN_FOREVER_SPEED;
+  Serial.println("turning, speed = ");
+  Serial.println(mySpeed);
   if (brakesOn) coast();
-  motorDriver.setSpeedAB(mySpeed, -mySpeed);
+  motorDriver.setSpeeds(convert(mySpeed), convert(-mySpeed));
   if (mySpeed == 0 || stopIfFault()) Moving = false;
   else Moving = true;
   timeOutCheck = millis();
@@ -339,41 +374,44 @@ void turnLeft(int mySpeed) // speed goes from 0 to 255
   Stop();    
 }
 
-
-void tiltUp(int myDistance) // distance goes from 0 to 255
-{
-  myDistance = TILT_TIME;
-  mySpeed = DEFAULT_TILT_SPEED; 
-  SERIAL_PORT.print("tilting up, distance = ");
-  SERIAL_PORT.println(myDistance);
-  motorDriver.setSpeedC(mySpeed);
-  //if (mySpeed == 0 || stopIfFault()) Moving = false;
-  //else Moving = true;
-  timeOutCheck = millis();
-  delay(TILT_TIME);
-  motorDriver.setCoastC();    
-}
-
-
-void tiltDown(int myDistance) // distance goes from 0 to 255
-{
-  myDistance = TILT_TIME;
-  mySpeed = -DEFAULT_TILT_SPEED; 
-  SERIAL_PORT.print("tilting dwon, distance = ");
-  SERIAL_PORT.println(myDistance);
-  motorDriver.setSpeedC(mySpeed);
-  //if (mySpeed == 0 || stopIfFault()) Moving = false;
-  //else Moving = true;
-  timeOutCheck = millis();
-  delay(myDistance);
-  motorDriver.setCoastC();   
-}
-
 void getMotorCurrents()
 {
-  int currentLeftMotor = motorDriver.getCurrentA();
-  int currentRightMotor = motorDriver.getCurrentB();
-  int currentTopMotor = motorDriver.getCurrentC();
+  int currentM1 = motorDriver.getM1CurrentMilliamps();
+  int currentM2 = motorDriver.getM2CurrentMilliamps();
+}
+
+void servoUp(int stepsToGo)
+{
+      Serial.println("Moving servo up");
+      stepsToGo = 1; // for now we just move a fixed distance
+      if (tiltPos - (TILT_DELTA *stepsToGo) >= TILT_MIN) tiltPos -= TILT_DELTA * stepsToGo;
+      else tiltPos = TILT_MIN;
+      tiltServo.write(tiltPos);
+      timeOutCheck = millis();
+}
+
+void servoDown(int stepsToGo) 
+{
+      Serial.println("Moving servo down");
+      stepsToGo = 1;  // for now we just move a fixed distance
+      if (tiltPos - (TILT_DELTA * stepsToGo) <= TILT_MAX) tiltPos += TILT_DELTA * stepsToGo;
+      else tiltPos = TILT_MAX;
+      tiltServo.write(tiltPos);
+      timeOutCheck = millis();
+}
+
+void servoCenter()
+{
+      tiltServo.write(TILT_CENTER);
+      tiltPos = TILT_CENTER;
+      timeOutCheck = millis();
+}
+
+void servoMaxDown()
+{
+      tiltPos = TILT_MIN;
+      tiltServo.write(tiltPos);
+      timeOutCheck = millis();
 }
 
 // process a command string
@@ -431,10 +469,10 @@ void HandleCommand(char* input, int length)
       Stop();
       break;
     case 'u':    // tilt up
-      tiltUp(stepsToGo);
+      servoUp(stepsToGo);
       break;
     case 'n':    // tilt down
-      tiltDown(stepsToGo);
+      servoDown(stepsToGo);
       break;
     case 'p':
       checkBattery(); // note that this writes a single char, so value should be in range 0-255
@@ -445,19 +483,19 @@ void HandleCommand(char* input, int length)
   }
 } 
 
+ 
 void setup()  
 {
   SERIAL_PORT.begin(SERIAL_SPEED);
-  SERIAL_PORT.println("ready for commands");
-  SERIAL_PORT_BLUETOOTH.begin(BLUETOOTH_SPEED);   // usually connect to bluetooth on serial2
-  motorDriver.setCoastAB();
-  motorDriver.setBrakesC();
+  SERIAL_PORT_BLUETOOTH.begin(BLUETOOTH_SPEED);
+  motorDriver.init();
+  coast();
   
   batteryRange = FULL_BATTERY_VOLTAGE - ZERO_PERCENT_BATTERY_VOLTAGE;
-  
-  for (int i=0; i< INPUT_BUFFER_SIZE; i++) inputBuffer[i] = 0;
-  
-  
+    
+  tiltServo.attach(tiltPin); 
+  tiltServo.write(TILT_CENTER);
+  tiltPos = TILT_CENTER;
 }
 
 void loop()
@@ -497,5 +535,6 @@ void loop()
   SERIAL_PORT_BLUETOOTH.println(inputBuffer); // need to println because android uses the CR as a delimiter
   for (int i = 0; i < inputLength; i++) inputBuffer[i] = 0;
 }
+
 
 
