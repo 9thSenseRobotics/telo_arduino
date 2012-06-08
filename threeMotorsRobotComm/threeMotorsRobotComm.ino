@@ -35,6 +35,33 @@
 // if there is no number, then the servo will just move by one step (TILT_DELTA)
 // U#
 
+// for the arduino mega, pin 47 corresponds to pin T5 on the ATMEL 2560
+// ATMEL T0 = arduino mega 38
+// ATMEL T1 = arduino mega NOT MAPPED uno pin 5
+// ATMEL T3 = arduino mega NOT MAPPED
+// ATMEL T4 = arduino mega NOT MAPPED
+// ATMEL T5 = arduino mega 47
+
+//The UNO has 3 Timers and 6 PWM output pins. The relation between timers and PWM outputs is:
+//Pins 5 and 6: controlled by timer0
+//Pins 9 and 10: controlled by timer1 and the servo library uses timer1, which is why 9 and 10 are not avail for PWM when you are using the servo library
+//Pins 11 and 3: controlled by timer2
+
+//On the Arduino Mega we have 6 timers and 15 PWM outputs:
+//Pins 4 and 13: controlled by timer0
+//Pins 11 and 12: controlled by timer1
+//Pins 9 and10: controlled by timer2
+//Pin 2, 3 and 5: controlled by timer 3
+//Pin 6, 7 and 8: controlled by timer 4
+//Pin 46, 45 and 44:: controlled by timer 5
+
+// macros to set and clear individual register bits
+#define clearRegisterBit(register, bit) (_SFR_BYTE(register) &= ~_BV(bit))
+#define setRegisterBit(register, bit) (_SFR_BYTE(register) |= _BV(bit))
+
+// Macro that clears all Timer/Counter5 interrupt flags by writing a 1 to the flag bit
+#define CLEAR_ALL_TIMER5_INT_FLAGS    (TIFR5 = TIFR5)
+
 #include <threeMotorsDriver.h> 
 
 #define SERIAL_PORT Serial
@@ -49,6 +76,8 @@
 #define DEFAULT_SPEED 220
 #define BW_REDUCTION 50
 #define DEFAULT_TILT_SPEED 240
+#define DEFAULT_DEGREES 10
+#define TICKS_PER_DEGREE_OF_TILT 100
 #define TD_REDUCTION 50
 #define DEFAULT_TURN_FOREVER_SPEED 220
 #define MOVE_TIME 100
@@ -92,6 +121,36 @@ void checkBattery()
                                       // 'b' indicates that it is a battery percent messsage
   SERIAL_PORT_BLUETOOTH.println(batteryPercent); 
 } 
+
+
+// use timer5 for tilt encoder
+void setupTiltEncoder()
+{ 
+  noInterrupts();  // disable all interrupts while we mess with timers
+  TCCR5A=0;  // reset timer/counter5 control register A  
+  
+  // register B: bit 7 = 1  to use the filter "Noise canceller" see p.160
+  // of the ATMEL 2560 chip specification document
+  // bit 6 = 1 to capture on rising edge
+  // bits 0,1,2 all = 1 to use external clock (counter)
+  // 128 + 64 + 7 = 199, so we could just   TCCR5B = 199;
+  // but this is clearer:
+  TCCR5B = 0;
+  setRegisterBit(TCCR5B, ICNC5);
+  setRegisterBit(TCCR5B, ICES5);
+  setRegisterBit(TCCR5B, CS52);
+  setRegisterBit(TCCR5B, CS51);
+  setRegisterBit(TCCR5B, CS50);
+  
+  setRegisterBit(TIMSK5, TOIE5);
+  // Set bit 0 (TOIE5) to use the overflow interrupt to count cycles of the counter 
+  // timer5 overflow is interrupt vector 51 (program address $0064) (p.106)
+  // and the flag is in TIFR5, bit 0
+  
+  TCNT5=0;   // counter value = 0
+  interrupts();  // re-enable interrupts
+  
+}
 
 bool stopIfFault()
 {
@@ -340,33 +399,88 @@ void turnLeft(int mySpeed) // speed goes from 0 to 255
 }
 
 
-void tiltUp(int myDistance) // distance goes from 0 to 255
+void tiltUp(int degreesToMove) // distance goes from 0 to 255
 {
-  myDistance = TILT_TIME;
+  TCNT5=0;   // counter value = 0
   mySpeed = DEFAULT_TILT_SPEED; 
-  SERIAL_PORT.print("tilting up, distance = ");
-  SERIAL_PORT.println(myDistance);
+  SERIAL_PORT.print("tilting up, degrees = ");
+  SERIAL_PORT.println(degreesToMove);
   motorDriver.setSpeedC(mySpeed);
-  //if (mySpeed == 0 || stopIfFault()) Moving = false;
+  //if (stopIfFault()) Moving = false;
   //else Moving = true;
+  Moving = true;
   timeOutCheck = millis();
-  delay(TILT_TIME);
-  motorDriver.setCoastC();    
+  
+  if (TICKS_PER_DEGREE_OF_TILT > 1 )
+  {
+  SERIAL_PORT.println("number of counts recorded while tilting");
+  long cycles = 0;
+  long count = 0;
+  long targetCount = degreesToMove * TICKS_PER_DEGREE_OF_TILT;
+  int movementStopped = 0;
+  int oldCount = 0;
+  while (count < targetCount && movementStopped < 3)
+  {
+     if (TIFR5 & 0x01) // check to see if tilt encoder overflowed
+     {
+         cycles++;
+         CLEAR_ALL_TIMER5_INT_FLAGS;
+     }
+     count = (cycles * 65636) + TCNT5;
+     if (count == oldCount) movementStopped++;
+     oldCount = count;
+     SERIAL_PORT.println(count);
+     delay(300);
+  }
+  }
+  else delay(TILT_TIME);
+  
+  motorDriver.setCoastC();   
+  Moving = false; 
+  timeOutCheck = millis(); 
 }
 
 
-void tiltDown(int myDistance) // distance goes from 0 to 255
+void tiltDown(int degreesToMove)
 {
-  myDistance = TILT_TIME;
+  TCNT5=0;   // counter value = 0
   mySpeed = -DEFAULT_TILT_SPEED; 
-  SERIAL_PORT.print("tilting dwon, distance = ");
-  SERIAL_PORT.println(myDistance);
+  SERIAL_PORT.print("tilting down, degrees = ");
+  SERIAL_PORT.println(degreesToMove);
   motorDriver.setSpeedC(mySpeed);
-  //if (mySpeed == 0 || stopIfFault()) Moving = false;
+  //if (stopIfFault()) Moving = false;
   //else Moving = true;
+  Moving = true;
   timeOutCheck = millis();
-  delay(myDistance);
+  
+  
+  if (TICKS_PER_DEGREE_OF_TILT > 1 )
+  {
+  SERIAL_PORT.println("number of counts recorded while tilting");
+  long cycles = 0;
+  long count = 0;
+  long targetCount = degreesToMove * TICKS_PER_DEGREE_OF_TILT;
+  int movementStopped = 0;
+  int oldCount = 0;
+  while (count < targetCount && movementStopped < 3)
+  {
+     if (TIFR5 & 0x01) // check to see if tilt encoder overflowed
+     {
+         cycles++;
+         CLEAR_ALL_TIMER5_INT_FLAGS;
+     }
+     count = (cycles * 65636) + TCNT5;
+     if (count == oldCount) movementStopped++;
+     oldCount = count;
+     SERIAL_PORT.println(count);
+     delay(300);
+  }
+  }
+  else delay(TILT_TIME);
+  
   motorDriver.setCoastC();   
+  Moving = false; 
+  timeOutCheck = millis(); 
 }
 
 void getMotorCurrents()
@@ -380,14 +494,14 @@ void getMotorCurrents()
 void HandleCommand(char* input, int length)
 {
   int speedToGo = DEFAULT_SPEED;
-  int stepsToGo = 1;  // servo steps
+  int degreesToGo = DEFAULT_DEGREES;  // degrees of tilt
   int value = 0;
   // calculate number following command
   if (length > 1)
   {
     value = atoi(&input[1]);
     speedToGo = value;                  // either servo steps or speed specified
-    stepsToGo = value;
+    degreesToGo = value;
   }
 
   // check commands
@@ -431,10 +545,10 @@ void HandleCommand(char* input, int length)
       Stop();
       break;
     case 'u':    // tilt up
-      tiltUp(stepsToGo);
+      tiltUp(degreesToGo);
       break;
     case 'n':    // tilt down
-      tiltDown(stepsToGo);
+      tiltDown(degreesToGo);
       break;
     case 'p':
       checkBattery(); // note that this writes a single char, so value should be in range 0-255
@@ -453,6 +567,8 @@ void setup()
   motorDriver.setCoastAB();
   motorDriver.setBrakesC();
   
+  setupTiltEncoder();
+  
   batteryRange = FULL_BATTERY_VOLTAGE - ZERO_PERCENT_BATTERY_VOLTAGE;
   
   for (int i=0; i< INPUT_BUFFER_SIZE; i++) inputBuffer[i] = 0;
@@ -468,8 +584,8 @@ void loop()
   {
     while (!SERIAL_PORT_BLUETOOTH.available()) // wait for input
     {
-      //if (millis() - timeOutCheck > TIMED_OUT && Moving) Stop();  //if we are moving and haven't heard anything in a long time, stop moving    
-      delay(10);
+       if (millis() - timeOutCheck > TIMED_OUT && Moving) Stop();  //if we are moving and haven't heard anything in a long time, stop moving    
+       delay(10);
     }
     charIn = SERIAL_PORT_BLUETOOTH.read(); // read it in
     if (charIn != 13 && charIn != 10 && charIn != 32)  // ignore carriage returns, line feeds, and spaces
