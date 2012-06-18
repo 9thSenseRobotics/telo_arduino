@@ -63,26 +63,26 @@ threeMotorsDriver::threeMotorsDriver()
     // if we later decide to use the servo library, then pins 9 and 10 will not be available for analogWrite()
     // available for future use: interrupt pins 2, PWM pins 7 - 13
     // available for I2C are pins 20 and 21 (these are also interrupt pins)
-    IN1A = 22;
-    IN2A = 24;
+    IN1A = 24;
+    IN2A = 22;
     STATUSA = 26;
     ENABLEAB = 28;
     PWMA = 4;  // PWM: 0 to 13. Provide 8-bit PWM output with the analogWrite() function.
     IN1B = 32;
-    IN2B = 34;
-    STATUSB = 36;
+    IN2B = 30;
+    STATUSB = 34;
     PWMB = 5;
-    IN1C = 42;
-    IN2C = 44;
-    STATUSC = 46;
-    ENABLEC = 48;
+    IN1C = 40;
+    IN2C = 42;
+    STATUSC = 38;
+    ENABLEC = 36;
     PWMC = 6;
     // interrupt pins on the mega are:
     // 2 (interrupt 0), 3 (interrupt 1), 18 (interrupt 5), 19 (4), 20 (3), and 21 (2)
     // we use them for motor encoders
-    ENCA = 3; 
-    ENCB = 18;
-    ENCC = 19;
+    ENCA = 18; 
+    ENCB = 19;
+    ENCC = 47;
 
     pinMode(IN1A,OUTPUT);
     pinMode(IN2A,OUTPUT);
