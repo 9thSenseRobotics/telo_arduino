@@ -74,9 +74,10 @@
 #define MESSAGE_BATTERY_PERCENT mb
 #define TIMED_OUT 8000
 #define DEFAULT_SPEED 220
-#define BW_REDUCTION 50
-#define DEFAULT_TILT_SPEED 240
-#define DEFAULT_DEGREES 10
+#define BW_REDUCTION 30
+#define DEFAULT_TILT_SPEED 140
+#define DW_TILT_SPEED_CUT 20
+#define DEFAULT_DEGREES 15
 #define TICKS_PER_DEGREE_OF_TILT 40
 #define TD_REDUCTION 50
 #define DEFAULT_TURN_FOREVER_SPEED 220
@@ -86,8 +87,8 @@
 #define MIN_DECEL_SPEED 60
 #define DELTA_SPEED 10
 #define ACCEL_DELAY 200
-#define LEFT_MOTOR_BIAS 10
-#define LEFT_MOTOR_BW_BIAS 23
+#define LEFT_MOTOR_BIAS -5
+#define LEFT_MOTOR_BW_BIAS -13
 #define LEFT_MOTOR_STOP_DELAY 0
 
 //#define TILT_CENTER 85
@@ -260,8 +261,9 @@ void decelerate(int initialSpeed)
 void moveForwardaLittle(int mySpeed)
 {
   //mySpeed = DEFAULT_SPEED;  // speed goes from 0 to 255
+  mySpeed=-mySpeed;
   SERIAL_PORT.print("moving, speed = ");
-  SERIAL_PORT.println(mySpeed);
+  SERIAL_PORT.println(-mySpeed);
   if (brakesOn) coast();
   motorDriver.setSpeedAB(mySpeed + LEFT_MOTOR_BIAS, mySpeed);
   if (mySpeed == 0 || stopIfFault()) Moving = false;
@@ -274,8 +276,9 @@ void moveForwardaLittle(int mySpeed)
 void moveForward(int mySpeed)
 {
   //mySpeed = DEFAULT_SPEED;  // speed goes from 0 to 255
+  mySpeed=-mySpeed;
   SERIAL_PORT.print("moving, speed = ");
-  SERIAL_PORT.println(mySpeed);
+  SERIAL_PORT.println(-mySpeed);
   if (brakesOn) coast();
 //  accelerate(mySpeed);
   motorDriver.setSpeedAB(mySpeed + LEFT_MOTOR_BIAS, mySpeed);
@@ -290,8 +293,9 @@ void moveForward(int mySpeed)
 void moveForwardForever(int mySpeed)
 {
   //mySpeed = DEFAULT_SPEED;  // speed goes from 0 to 255
+  mySpeed=-mySpeed;
   SERIAL_PORT.print("moving, speed = ");
-  SERIAL_PORT.println(mySpeed);
+  SERIAL_PORT.println(-mySpeed);
   if (brakesOn) coast();
 //  accelerate(mySpeed);
   motorDriver.setSpeedAB(mySpeed + LEFT_MOTOR_BIAS, mySpeed);
@@ -302,9 +306,9 @@ void moveForwardForever(int mySpeed)
 
 void moveBackwardaLittle(int mySpeed)
 {
-  mySpeed = -DEFAULT_SPEED + BW_REDUCTION;  // speed goes from 0 to 255
+  mySpeed = DEFAULT_SPEED - BW_REDUCTION;  // speed goes from 0 to 255
   SERIAL_PORT.print("moving, speed = ");
-  SERIAL_PORT.println(mySpeed);
+  SERIAL_PORT.println(-mySpeed);
   if (brakesOn) coast();
   //accelerate(mySpeed);
   motorDriver.setSpeedAB(mySpeed - LEFT_MOTOR_BW_BIAS, mySpeed);
@@ -318,9 +322,9 @@ void moveBackwardaLittle(int mySpeed)
 
 void moveBackward(int mySpeed)
 {
-  mySpeed = -DEFAULT_SPEED + BW_REDUCTION;  // speed goes from 0 to 255// backward should be slower than forward
+  mySpeed = DEFAULT_SPEED - BW_REDUCTION;  // speed goes from 0 to 255// backward should be slower than forward
   SERIAL_PORT.print("moving, speed = ");
-  SERIAL_PORT.println(mySpeed);
+  SERIAL_PORT.println(-mySpeed);
   if (brakesOn) coast();
   //accelerate(mySpeed);
   motorDriver.setSpeedAB(mySpeed - LEFT_MOTOR_BW_BIAS, mySpeed);
@@ -334,9 +338,9 @@ void moveBackward(int mySpeed)
 
 void moveBackwardForever(int mySpeed)
 {
-  mySpeed = -DEFAULT_SPEED + BW_REDUCTION;  // speed goes from 0 to 255 // backward should be slower than forward
+  mySpeed = DEFAULT_SPEED - BW_REDUCTION;  // speed goes from 0 to 255 // backward should be slower than forward
   SERIAL_PORT.print("moving, speed = ");
-  SERIAL_PORT.println(mySpeed);
+  SERIAL_PORT.println(-mySpeed);
   if (brakesOn) coast();
   //accelerate(mySpeed);
   motorDriver.setSpeedAB(mySpeed - LEFT_MOTOR_BW_BIAS, mySpeed);
@@ -402,7 +406,7 @@ void turnLeft(int mySpeed) // speed goes from 0 to 255
 void tiltUp(int degreesToMove) // distance goes from 0 to 255
 {
   TCNT5=0;   // counter value = 0
-  mySpeed = DEFAULT_TILT_SPEED; 
+  mySpeed = -DEFAULT_TILT_SPEED; 
   SERIAL_PORT.print("tilting up, degrees = ");
   SERIAL_PORT.println(degreesToMove);
   motorDriver.setSpeedC(mySpeed);
@@ -444,7 +448,7 @@ void tiltUp(int degreesToMove) // distance goes from 0 to 255
 void tiltDown(int degreesToMove)
 {
   TCNT5=0;   // counter value = 0
-  mySpeed = -DEFAULT_TILT_SPEED; 
+  mySpeed = DEFAULT_TILT_SPEED - DW_TILT_SPEED_CUT; 
   SERIAL_PORT.print("tilting down, degrees = ");
   SERIAL_PORT.println(degreesToMove);
   motorDriver.setSpeedC(mySpeed);
