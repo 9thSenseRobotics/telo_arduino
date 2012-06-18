@@ -110,18 +110,18 @@ threeMotorsDriver::threeMotorsDriver()
     
     // start disabled, with directions set to forward
     digitalWrite(ENABLEAB, LOW);
-    digitalWrite(IN1A,LOW);
-    digitalWrite(IN2A,HIGH);    
+    digitalWrite(IN1A,HIGH);
+    digitalWrite(IN2A,LOW);    
     analogWrite(PWMA, 0);
     
     digitalWrite(ENABLEAB, LOW);
-    digitalWrite(IN1B,LOW);
-    digitalWrite(IN2B,HIGH); 
+    digitalWrite(IN1B,HIGH);
+    digitalWrite(IN2B,LOW); 
     analogWrite(PWMB, 0);
     
     digitalWrite(ENABLEC, LOW);
-    digitalWrite(IN1C,LOW);
-    digitalWrite(IN2C,HIGH); 
+    digitalWrite(IN1C,HIGH);
+    digitalWrite(IN2C,LOW); 
     analogWrite(PWMC, 0);
 }
 
@@ -130,14 +130,14 @@ void threeMotorsDriver::setSpeedA(int speed)
     digitalWrite(ENABLEAB, HIGH);
     if (speed < 0)
     {
-        digitalWrite(IN1A,HIGH);
-        digitalWrite(IN2A,LOW);   // turn reverse
+        digitalWrite(IN1A,LOW);
+        digitalWrite(IN2A,HIGH);   // turn reverse
         speed = -speed;
     }
     else
     {
-        digitalWrite(IN1A,LOW);
-        digitalWrite(IN2A,HIGH);   // turn forward
+        digitalWrite(IN1A,HIGH);
+        digitalWrite(IN2A,LOW);   // turn forward
     }
     if (speed > 255) speed = 255;
     analogWrite(PWMA, speed);
@@ -148,14 +148,14 @@ void threeMotorsDriver::setSpeedB(int speed)
     digitalWrite(ENABLEAB, HIGH);
     if (speed < 0)
     {
-        digitalWrite(IN1B,HIGH);
-        digitalWrite(IN2B,LOW);   // turn reverse
+        digitalWrite(IN1B,LOW);
+        digitalWrite(IN2B,HIGH);   // turn reverse
         speed = -speed;
     }
     else
     {
-        digitalWrite(IN1B,LOW);
-        digitalWrite(IN2B,HIGH);   // turn forward
+        digitalWrite(IN1B,HIGH);
+        digitalWrite(IN2B,LOW);   // turn forward
     }
     if (speed > 255) speed = 255;
     analogWrite(PWMB, speed);
@@ -166,14 +166,14 @@ void threeMotorsDriver::setSpeedC(int speed)
     digitalWrite(ENABLEC, HIGH);
     if (speed < 0)
     {
-        digitalWrite(IN1C,HIGH);
-        digitalWrite(IN2C,LOW);   // turn reverse
+        digitalWrite(IN1C,LOW);
+        digitalWrite(IN2C,HIGH);   
         speed = -speed;
     }
     else
     {
-        digitalWrite(IN1C,LOW);
-        digitalWrite(IN2C,HIGH);   // turn forward
+        digitalWrite(IN1C,HIGH);
+        digitalWrite(IN2C,LOW);  
     }
     if (speed > 255) speed = 255;
     analogWrite(PWMC, speed);
@@ -184,27 +184,27 @@ void threeMotorsDriver::setSpeedAB(int speedA, int speedB)
     digitalWrite(ENABLEAB, HIGH);
     if (speedA < 0)
     {
-        digitalWrite(IN1A,HIGH);
-        digitalWrite(IN2A,LOW);   // turn reverse
+        digitalWrite(IN1A,LOW);
+        digitalWrite(IN2A,HIGH);   // move backwards
         speedA = -speedA;
     }
     else
     {
-        digitalWrite(IN1A,LOW);
-        digitalWrite(IN2A,HIGH);   // turn forward
+        digitalWrite(IN1A,HIGH);
+        digitalWrite(IN2A,LOW);   // move forward
     }
     if (speedA > 255) speedA = 255;
     
     if (speedB < 0)
     {
-        digitalWrite(IN1B,HIGH);
-        digitalWrite(IN2B,LOW);   // turn reverse
+        digitalWrite(IN1B,LOW);
+        digitalWrite(IN2B,HIGH);   // turn reverse
         speedB = -speedB;
     }
     else
     {
-        digitalWrite(IN1B,LOW);
-        digitalWrite(IN2B,HIGH);   // turn forward
+        digitalWrite(IN1B,HIGH);
+        digitalWrite(IN2B,LOW);   // turn forward
     }
     analogWrite(PWMA, speedA);
     analogWrite(PWMB, speedB);
