@@ -77,7 +77,7 @@
 #define BW_REDUCTION 50
 #define DEFAULT_TILT_SPEED 240
 #define DEFAULT_DEGREES 10
-#define TICKS_PER_DEGREE_OF_TILT 40
+#define TICKS_PER_DEGREE_OF_TILT 30
 #define TD_REDUCTION 50
 #define DEFAULT_TURN_FOREVER_SPEED 220
 #define MOVE_TIME 100
@@ -107,7 +107,7 @@ threeMotorsDriver motorDriver;
 
 char inputBuffer[INPUT_BUFFER_SIZE], charIn;
 int tiltPos, inputLength, mySpeed;
-bool Moving, brakesOn;
+bool Moving, brakesOn, exceededCurrentLimitC = false;
 long timeOutCheck;
 float batteryRange;
 int currentTopMotor, currentRightMotor, currentLeftMotor;
@@ -413,35 +413,52 @@ void tiltUp(int degreesToMove) // distance goes from 0 to 255
   Moving = true;
   timeOutCheck = millis();
   
-  if (TICKS_PER_DEGREE_OF_TILT > 1 )
+  if (TICKS_PER_DEGREE_OF_TILT > 1  && degreesToMove > 0 )
   {
-  SERIAL_PORT.println("number of counts recorded while tilting");
-  long cycles = 0;
-  long count = 0;
-  long targetCount = degreesToMove * TICKS_PER_DEGREE_OF_TILT;
-  int movementStopped = 0;
-  int oldCount = 0;
-  while (count < targetCount && movementStopped < 3 && currentTopMotor < CURRENT_LIMIT_TOP_MOTOR)
-  {
-     if (TIFR5 & 0x01) // check to see if tilt encoder overflowed
-     {
-         cycles++;
-         CLEAR_ALL_TIMER5_INT_FLAGS;
-     }
-     count = (cycles * 65636) + TCNT5;
-     if (count == oldCount) movementStopped++;
-     oldCount = count;
-     SERIAL_PORT.println(count);
-     delay(300);
-     getMotorCurrents();
-     SERIAL_PORT.print("Tilt motor current = ");
-     SERIAL_PORT.println(currentTopMotor);
-  }
+    SERIAL_PORT.println("number of counts recorded while tilting");
+    long cycles = 0;
+    long count = 0;
+    long targetCount = degreesToMove * TICKS_PER_DEGREE_OF_TILT;
+    int movementStopped = 0;
+    int oldCount = 0;
+    while (count < targetCount && movementStopped < 3 && currentTopMotor < CURRENT_LIMIT_TOP_MOTOR)
+    {
+       if (TIFR5 & 0x01) // check to see if tilt encoder overflowed
+       {
+           cycles++;
+           CLEAR_ALL_TIMER5_INT_FLAGS;
+       }
+       count = (cycles * 65636) + TCNT5;
+       if (count == oldCount) movementStopped++;
+       oldCount = count;
+       SERIAL_PORT.print("Tilting up, encoder: ");
+       SERIAL_PORT.println(count);
+       getMotorCurrents();
+       SERIAL_PORT.print("Tilt motor current = ");
+       SERIAL_PORT.println(currentTopMotor);
+       delay(100);
+    }
+    if (currentTopMotor >= CURRENT_LIMIT_TOP_MOTOR)
+    {
+      motorDriver.setSpeedC(0);
+      delay(200);
+      SERIAL_PORT.println("Tilt motor current exceeded limit");
+      currentTopMotor = 0;
+      if (exceededCurrentLimitC)
+      {
+        SERIAL_PORT.println("Tilt motor current exceeded limit twice in a row");
+        return;
+      }
+      exceededCurrentLimitC = true;
+      tiltDown(5);
+      return;   
+    }
   }
   else delay(TILT_TIME);
   
-  motorDriver.setCoastC();   
+  motorDriver.setBrakesC();   
   Moving = false; 
+  exceededCurrentLimitC = false;
   timeOutCheck = millis(); 
 }
 
@@ -459,36 +476,51 @@ void tiltDown(int degreesToMove)
   timeOutCheck = millis();
   
   
-  if (TICKS_PER_DEGREE_OF_TILT > 1 )
+  if (TICKS_PER_DEGREE_OF_TILT > 1 && degreesToMove > 0 )
   {
-  SERIAL_PORT.println("number of counts recorded while tilting");
-  long cycles = 0;
-  long count = 0;
-  long targetCount = degreesToMove * TICKS_PER_DEGREE_OF_TILT;
-  int movementStopped = 0;
-  int oldCount = 0;
-  while (count < targetCount && movementStopped < 3 && currentTopMotor < CURRENT_LIMIT_TOP_MOTOR)
-  {
-     if (TIFR5 & 0x01) // check to see if tilt encoder overflowed
-     {
-         cycles++;
-         CLEAR_ALL_TIMER5_INT_FLAGS;
-     }
-     count = (cycles * 65636) + TCNT5;
-     if (count == oldCount) movementStopped++;
-     oldCount = count;
-     SERIAL_PORT.print("Encoder: ");
-     SERIAL_PORT.println(count);
-     delay(300);
-     getMotorCurrents();
-     SERIAL_PORT.print("Tilt motor current = ");
-     SERIAL_PORT.println(currentTopMotor);
-  }
+    long cycles = 0;
+    long count = 0;
+    long targetCount = degreesToMove * TICKS_PER_DEGREE_OF_TILT;
+    int movementStopped = 0;
+    int oldCount = 0;
+    while (count < targetCount && movementStopped < 3 && currentTopMotor < CURRENT_LIMIT_TOP_MOTOR)
+    {
+       if (TIFR5 & 0x01) // check to see if tilt encoder overflowed
+       {
+           cycles++;
+           CLEAR_ALL_TIMER5_INT_FLAGS;
+       }
+       count = (cycles * 65636) + TCNT5;
+       if (count == oldCount) movementStopped++;
+       oldCount = count;
+       SERIAL_PORT.print("Tilting down, encoder: ");
+       SERIAL_PORT.println(count);
+       getMotorCurrents();
+       SERIAL_PORT.print("Tilt motor current = ");
+       SERIAL_PORT.println(currentTopMotor);
+       delay(100);
+    }
+    if (currentTopMotor >= CURRENT_LIMIT_TOP_MOTOR)
+    {
+      motorDriver.setSpeedC(0);
+      delay(200);
+      SERIAL_PORT.println("Tilt motor current exceeded limit");
+      currentTopMotor = 0;
+      if (exceededCurrentLimitC)
+      {
+        SERIAL_PORT.println("Tilt motor current exceeded limit twice in a row");
+        return;
+      }
+      exceededCurrentLimitC = true;
+      tiltUp(5);
+      return; 
+    }
   }
   else delay(TILT_TIME);
   
-  motorDriver.setCoastC();   
+  motorDriver.setBrakesC();   
   Moving = false; 
+  exceededCurrentLimitC = false;
   timeOutCheck = millis(); 
 }
 
@@ -594,7 +626,8 @@ void loop()
   {
     while (!SERIAL_PORT_BLUETOOTH.available()) // wait for input
     {
-       if (millis() - timeOutCheck > TIMED_OUT && Moving) Stop();  //if we are moving and haven't heard anything in a long time, stop moving    
+       if (millis() - timeOutCheck > TIMED_OUT && Moving) Stop();  //if we are moving and haven't heard anything in a long time, stop moving 
+       getMotorCurrents();
        delay(10);
     }
     charIn = SERIAL_PORT_BLUETOOTH.read(); // read it in
