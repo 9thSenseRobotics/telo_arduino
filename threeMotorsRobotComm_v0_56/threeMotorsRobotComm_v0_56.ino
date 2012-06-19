@@ -89,8 +89,8 @@
 #define LEFT_MOTOR_BIAS 10
 #define LEFT_MOTOR_BW_BIAS 23
 #define LEFT_MOTOR_STOP_DELAY 0
-#define CURRENT_LIMIT_TOP_MOTOR 1000
-#define CURRENT_LIMIT_DRIVE_MOTORS 2000
+#define CURRENT_LIMIT_TOP_MOTOR 2200
+#define CURRENT_LIMIT_DRIVE_MOTORS 3000
 
 //#define TILT_CENTER 85
 //#define TILT_LOOK_DOWN 135
@@ -412,7 +412,7 @@ void tiltUp(int degreesToMove) // distance goes from 0 to 255
   //else Moving = true;
   Moving = true;
   timeOutCheck = millis();
-  
+  /*
   if (TICKS_PER_DEGREE_OF_TILT > 1  && degreesToMove > 0 )
   {
     SERIAL_PORT.println("number of counts recorded while tilting");
@@ -454,7 +454,32 @@ void tiltUp(int degreesToMove) // distance goes from 0 to 255
       return;   
     }
   }
-  else delay(TILT_TIME);
+  else 
+  */
+   for (int i = 0; i < 10; i++)
+ {
+    getMotorCurrents();
+    SERIAL_PORT.print("Tilt motor current = ");
+    SERIAL_PORT.println(currentTopMotor);
+    if (currentTopMotor >= CURRENT_LIMIT_TOP_MOTOR)
+    {
+      motorDriver.setSpeedC(0);
+      delay(200);
+      SERIAL_PORT.println("Tilt motor current exceeded limit");
+      currentTopMotor = 0;
+      if (exceededCurrentLimitC)
+      {
+        SERIAL_PORT.println("Tilt motor current exceeded limit twice in a row");
+        return;
+      }
+      exceededCurrentLimitC = true;
+      tiltDown(8);
+      delay(100);
+      tiltDown(5);
+      return; 
+    }
+    delay(TILT_TIME/10);
+ }
   
   motorDriver.setBrakesC();   
   Moving = false; 
@@ -475,7 +500,7 @@ void tiltDown(int degreesToMove)
   Moving = true;
   timeOutCheck = millis();
   
-  
+  /*
   if (TICKS_PER_DEGREE_OF_TILT > 1 && degreesToMove > 0 )
   {
     long cycles = 0;
@@ -516,7 +541,33 @@ void tiltDown(int degreesToMove)
       return; 
     }
   }
-  else delay(TILT_TIME);
+  else
+ */
+ for (int i = 0; i < 10; i++)
+ {
+    getMotorCurrents();
+    SERIAL_PORT.print("Tilt motor current = ");
+    SERIAL_PORT.println(currentTopMotor);
+    if (currentTopMotor >= CURRENT_LIMIT_TOP_MOTOR)
+    {
+      motorDriver.setSpeedC(0);
+      delay(200);
+      SERIAL_PORT.println("Tilt motor current exceeded limit");
+      currentTopMotor = 0;
+      if (exceededCurrentLimitC)
+      {
+        SERIAL_PORT.println("Tilt motor current exceeded limit twice in a row");
+        return;
+      }
+      exceededCurrentLimitC = true;
+      tiltUp(8);
+      delay(100);
+      tiltUp(5);
+      return; 
+    }
+    delay(TILT_TIME/10);
+ }
+
   
   motorDriver.setBrakesC();   
   Moving = false; 
