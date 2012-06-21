@@ -473,9 +473,9 @@ void tiltUp(int degreesToMove) // distance goes from 0 to 255
         return;
       }
       exceededCurrentLimitC = true;
-      tiltDown(8);
-      delay(100);
-      tiltDown(5);
+      //tiltDown(8);
+      //delay(100);
+      //tiltDown(5);
       return; 
     }
     delay(TILT_TIME/10);
@@ -560,9 +560,9 @@ void tiltDown(int degreesToMove)
         return;
       }
       exceededCurrentLimitC = true;
-      tiltUp(8);
-      delay(100);
-      tiltUp(5);
+      //tiltUp(8);
+      //delay(100);
+      //tiltUp(5);
       return; 
     }
     delay(TILT_TIME/10);
