@@ -75,13 +75,13 @@
 #define TIMED_OUT 8000
 #define DEFAULT_SPEED 220
 #define BW_REDUCTION 50
-#define DEFAULT_TILT_SPEED 240
+#define DEFAULT_TILT_SPEED 135
 #define DEFAULT_DEGREES 10
 #define TICKS_PER_DEGREE_OF_TILT 30
 #define TD_REDUCTION 50
 #define DEFAULT_TURN_FOREVER_SPEED 220
 #define MOVE_TIME 100
-#define TILT_TIME 100
+#define TILT_TIME 500
 #define MIN_ACCEL_SPEED 100
 #define MIN_DECEL_SPEED 60
 #define DELTA_SPEED 10
@@ -89,7 +89,7 @@
 #define LEFT_MOTOR_BIAS 10
 #define LEFT_MOTOR_BW_BIAS 23
 #define LEFT_MOTOR_STOP_DELAY 0
-#define CURRENT_LIMIT_TOP_MOTOR 2200
+#define CURRENT_LIMIT_TOP_MOTOR 1200
 #define CURRENT_LIMIT_DRIVE_MOTORS 3000
 
 //#define TILT_CENTER 85
@@ -467,7 +467,7 @@ void tiltUp(int degreesToMove) // distance goes from 0 to 255
       delay(200);
       SERIAL_PORT.println("Tilt motor current exceeded limit");
       currentTopMotor = 0;
-      if (exceededCurrentLimitC)
+      if (exceededCurrentLimitC && i > 2) // the first couple of current values are high, so we ignore them
       {
         SERIAL_PORT.println("Tilt motor current exceeded limit twice in a row");
         return;
