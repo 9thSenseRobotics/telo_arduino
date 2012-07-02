@@ -72,7 +72,7 @@
 #define COMMAND_END_CHARACTER '#'
 #define COMM_CHECK_CHARACTER 'c'
 #define MESSAGE_BATTERY_PERCENT mb
-#define TIMED_OUT 8000
+#define TIMED_OUT 2000
 #define DEFAULT_SPEED 220
 #define BW_REDUCTION 50
 #define DEFAULT_TILT_UP_SPEED 180
@@ -648,7 +648,11 @@ void HandleCommand(char* input, int length)
       break;    
     default:
       SERIAL_PORT.print("did not recognize command: ");
-      SERIAL_PORT.println(input[0]);
+       if (input[0] == 13) SERIAL_PORT.print(" 13 ");
+       else if (input[0] == 10) SERIAL_PORT.print(" 10 ");
+       else if (input[0] == 32) SERIAL_PORT.print(" 32 ");
+       else if (input[0] == 0) SERIAL_PORT.print(" 0 ");
+       else SERIAL_PORT.print(input[0]);
       Stop();
       break;
   }
@@ -696,11 +700,15 @@ void loop()
   //now flush anything that came after the COMMAND_END_CHARACTER
   if (SERIAL_PORT_BLUETOOTH.available())
   {
-    SERIAL_PORT.print("Extra characters received are: ");
+    SERIAL_PORT.print("Extra characters received are: ");  // this is usually the null char end string (0)
     while (SERIAL_PORT_BLUETOOTH.available())
     {
        charIn = SERIAL_PORT_BLUETOOTH.read(); // read it in
-       SERIAL_PORT.print(charIn);
+       if (charIn == 13) SERIAL_PORT.print(" 13 ");
+       else if (charIn == 10) SERIAL_PORT.print(" 10 ");
+       else if (charIn == 32) SERIAL_PORT.print(" 32 ");
+       else if (charIn == 0) SERIAL_PORT.print(" 0 ");
+       else SERIAL_PORT.print(charIn);
     }
     SERIAL_PORT.println();
   }
