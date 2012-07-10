@@ -31,6 +31,17 @@ class threeMotorsDriver
     unsigned char getStatusA(); // Get status of left motor
     unsigned char getStatusB(); // Get status of right motor
     unsigned char getStatusC(); // Get status of top motor
+	
+	// interrupt pins on the mega are:
+    // 2 (interrupt 0), 3 (interrupt 1), 18 (interrupt 5), 19 (4), 20 (3), and 21 (2)
+    // we use them for motor encoders
+    unsigned char ENCA; 
+	unsigned char INTERRUPTA;
+    unsigned char ENCB;
+	unsigned char INTERRUPTB;
+    unsigned char ENCC;
+	unsigned char INTERRUPTC;
+	
     
   private:
     unsigned char IN1A;
@@ -49,12 +60,6 @@ class threeMotorsDriver
     unsigned char STATUSC;
     unsigned char ENABLEC;
     unsigned char PWMC;
-    // interrupt pins on the mega are:
-    // 2 (interrupt 0), 3 (interrupt 1), 18 (interrupt 5), 19 (4), 20 (3), and 21 (2)
-    // we use them for motor encoders
-    unsigned char ENCA; 
-    unsigned char ENCB;
-    unsigned char ENCC;
     
 };
 

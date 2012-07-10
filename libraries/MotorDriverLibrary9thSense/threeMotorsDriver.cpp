@@ -81,8 +81,12 @@ threeMotorsDriver::threeMotorsDriver()
     // 2 (interrupt 0), 3 (interrupt 1), 18 (interrupt 5), 19 (4), 20 (3), and 21 (2)
     // we use them for motor encoders
     ENCA = 18; 
+	INTERRUPTA = 5;
     ENCB = 19;
-    ENCC = 47;
+	INTERRUPTB = 4;
+    ENCC = 20;
+	INTERRUPTC = 3;
+	
 
     pinMode(IN1A,OUTPUT);
     pinMode(IN2A,OUTPUT);
@@ -107,6 +111,11 @@ threeMotorsDriver::threeMotorsDriver()
     pinMode(ENCA,INPUT); 
     pinMode(ENCB, INPUT);
     pinMode(ENCC, INPUT);
+	
+	// turn on pullup resistors
+	digitalWrite(ENCA, HIGH);
+	digitalWrite(ENCB, HIGH);
+	digitalWrite(ENCC, HIGH);
     
     // start disabled, with directions set to forward
     digitalWrite(ENABLEAB, LOW);
