@@ -96,6 +96,9 @@
 #define LEFT_MOTOR_STOP_DELAY 0
 #define CURRENT_LIMIT_TOP_MOTOR 1200
 #define CURRENT_LIMIT_DRIVE_MOTORS 4000
+// one turn of the motor = 960 steps in the encoder.
+// with large vex wheel, one rotation = 42 cm
+// so we have 23 steps per cm
 #define ENCODER_TICKS_PER_CM 23
 
 //#define TILT_CENTER 85
