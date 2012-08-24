@@ -1,5 +1,5 @@
-#ifndef threeMotorsDriver_h
-#define threeMotorsDriver_h
+#ifndef threeMotorsDriverReverseReverse_h
+#define threeMotorsDriverReverseReverse_h
 
 #include <Arduino.h>
 
@@ -8,11 +8,11 @@
 #define FBB A6
 #define FBC A7
     
-class threeMotorsDriver
+class threeMotorsDriverReverse
 {
   public:  
     // CONSTRUCTOR
-    threeMotorsDriver(); // pin selection an initial config
+    threeMotorsDriverReverse(); // pin selection an initial config
     
     // PUBLIC METHODS
     void setSpeedA(int speed); // Set speed for left motor
@@ -21,8 +21,10 @@ class threeMotorsDriver
     void setSpeedAB(int speedA, int speedB); // Set speed for left and right motors
     void setBrakesAB();
     void setBrakesC();
+    void setCoastA();
+    void setCoastB();
+    void setCoastC();
     void setCoastAB();
-	void setCoastC();
     int getCurrentA();
     int getCurrentB();
     int getCurrentC();
@@ -45,6 +47,7 @@ class threeMotorsDriver
     unsigned char IN1A;
     unsigned char IN2A;
     unsigned char STATUSA;
+    unsigned char ENABLEAB;
     unsigned char PWMA;  // PWM: 0 to 13. Provide 8-bit PWM output with the analogWrite() function.
     
     unsigned char IN1B;
@@ -55,6 +58,7 @@ class threeMotorsDriver
     unsigned char IN1C;
     unsigned char IN2C;
     unsigned char STATUSC;
+    unsigned char ENABLEC;
     unsigned char PWMC;
     
 };

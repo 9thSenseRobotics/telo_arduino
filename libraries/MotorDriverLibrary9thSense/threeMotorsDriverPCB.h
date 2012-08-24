@@ -1,5 +1,5 @@
-#ifndef threeMotorsDriver_h
-#define threeMotorsDriver_h
+#ifndef threeMotorsDriverPCB_h
+#define threeMotorsDriverPCB_h
 
 #include <Arduino.h>
 
@@ -8,11 +8,11 @@
 #define FBB A6
 #define FBC A7
     
-class threeMotorsDriver
+class threeMotorsDriverPCB
 {
   public:  
     // CONSTRUCTOR
-    threeMotorsDriver(); // pin selection an initial config
+    threeMotorsDriverPCB(); // pin selection an initial config
     
     // PUBLIC METHODS
     void setSpeedA(int speed); // Set speed for left motor
