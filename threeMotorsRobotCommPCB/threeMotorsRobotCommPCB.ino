@@ -77,9 +77,8 @@
 #include <threeMotorsDriverPCB.h>
 #include <EEPROM.h>
 
-#define EEPROM_TEST_VALUE_10 2
-#define EEPROM_TEST_VALUE_11 4
-#define EEPROM_TEST_VALUE_12 8
+// standard defines
+#define BATTERY_MONITOR_PIN A4
 #define SERIAL_PORT Serial
 #define SERIAL_PORT_BLUETOOTH Serial2
 #define SERIAL_SPEED 115200
@@ -88,14 +87,20 @@
 #define COMMAND_END_CHARACTER '#'
 #define COMM_CHECK_CHARACTER 'c'
 #define MESSAGE_BATTERY_PERCENT mb
-#define TIMED_OUT 2000
+#define MESSAGE_EEPROM_VALUE mE
+#define EEPROM_TEST_VALUE_10 2
+#define EEPROM_TEST_VALUE_11 4
+#define EEPROM_TEST_VALUE_12 8
+
+// EEPROM written defines
+#define TIMED_OUT 3000
 #define DEFAULT_SPEED 220
 #define BW_REDUCTION 50
 #define DEFAULT_TILT_UP_SPEED 180
 #define DEFAULT_TILT_DOWN_SPEED 135
 #define DEFAULT_DEGREES 10
 #define TICKS_PER_DEGREE_OF_TILT 30
-#define TD_REDUCTION 50
+//#define TD_REDUCTION 50
 #define DEFAULT_TURN_FOREVER_SPEED 220
 #define MOVE_TIME 100
 #define TILT_TIME 500
@@ -106,8 +111,8 @@
 #define LEFT_MOTOR_BIAS 10
 #define LEFT_MOTOR_BW_BIAS 23
 #define LEFT_MOTOR_STOP_DELAY 0
-#define CURRENT_LIMIT_TOP_MOTOR 1200
-#define CURRENT_LIMIT_DRIVE_MOTORS 4000
+#define CURRENT_LIMIT_TOP_MOTOR 2000
+#define CURRENT_LIMIT_DRIVE_MOTORS 4500
 // one turn of the motor = 960 steps in the encoder.
 // with large vex wheel, one rotation = 42 cm
 // so we have 23 steps per cm
@@ -119,7 +124,6 @@
 //#define TILT_MAX 165
 //#define TILT_DELTA 10
 
-#define BATTERY_MONITOR_PIN A4
 #define ZERO_PERCENT_BATTERY_VOLTAGE 10.5
 #define FULL_BATTERY_VOLTAGE 13.0
 #define VOLTAGE_DIVIDER_RATIO 3.2
@@ -128,33 +132,34 @@ threeMotorsDriverPCB motorDriver;
 
 char inputBuffer[INPUT_BUFFER_SIZE], charIn;
 int tiltPos, inputLength, mySpeed;
-bool Moving, brakesOn, exceededCurrentLimitC = false;
+bool Moving, brakesOn, exceededCurrentLimitC = false, enableEEPROMwrite = false;
 long timeOutCheck;
 float batteryRange;
-int currentTopMotor, currentRightMotor, currentLeftMotor, eepromAddress;
+int currentTopMotor, currentRightMotor, currentLeftMotor;
 volatile unsigned long encoderCounterLeft = 0; //range from 0 to 4,294,967,295 (2^32 - 1)
 volatile unsigned long encoderCounterRight = 0;
 unsigned int lastReportedCounterLeft = 1, lastReportedCounterRight = 1;
 int program_version;
 int timed_out_default, speed_default, bw_reduction_default, tilt_up_speed_default;
 int tilt_down_speed_default, degrees_default, ticks_per_degree_of_tilt_default;
-int td_reduction_default, turn_forever_speed_default, move_time_default, tilt_time_default;
+//int td_reduction_default;
+int turn_forever_speed_default, move_time_default, tilt_time_default;
 int min_accel_speed_default, min_decel_speed_default, delta_speed_default, accel_delay_default;
 int left_motor_bias_default, left_motor_bw_bias_default, left_motor_stop_delay_default;
 int current_limit_top_motor_default, current_limit_drive_motors_default;
 int encoder_ticks_per_cm_default;
 //int battery_monitor_pin_default;
+int EEPROMvalue, EEPROMaddress;
 double zero_percent_battery_voltage_default,full_battery_voltage_default,voltage_divider_ratio_default;
 
 
 // have to redo some of these, as they do not fit into one byte
 void setDefaults()
 {
-  if (EEPROM.read(10) == EEPROM_TEST_VALUE_10 &&
+ if (EEPROM.read(10) == EEPROM_TEST_VALUE_10 &&
     EEPROM.read(11) == EEPROM_TEST_VALUE_11 &&
     EEPROM.read(12) == EEPROM_TEST_VALUE_12)  // test to see if we have written to the EEPROM
   {
-    program_version = EEPROM.read(0);
     timed_out_default = EEPROM.read(101);
     speed_default = EEPROM.read(102);
     bw_reduction_default = EEPROM.read(103);
@@ -162,7 +167,7 @@ void setDefaults()
     tilt_down_speed_default = EEPROM.read(105);
     degrees_default = EEPROM.read(106);
     ticks_per_degree_of_tilt_default = EEPROM.read(107);
-    td_reduction_default = EEPROM.read(108);
+    //td_reduction_default = EEPROM.read(108);
     turn_forever_speed_default = EEPROM.read(109);
     move_time_default = EEPROM.read(110);
     tilt_time_default = EEPROM.read(111);
@@ -173,10 +178,12 @@ void setDefaults()
     left_motor_bias_default = EEPROM.read(116);
     left_motor_bw_bias_default = EEPROM.read(117);
     left_motor_stop_delay_default = EEPROM.read(118);
-    current_limit_top_motor_default = EEPROM.read(119);
-    current_limit_drive_motors_default = EEPROM.read(120);
+    current_limit_top_motor_default = EEPROM.read(119)*10;     // multiply to keep the eeprom parameter < 255
+    current_limit_drive_motors_default = EEPROM.read(120)*100; // multiply to keep the eeprom parameter < 255
     encoder_ticks_per_cm_default = EEPROM.read(121);
-    
+    zero_percent_battery_voltage_default = ((double) EEPROM.read(122)) + (( (double) EEPROM.read(123)) / 10.);
+    full_battery_voltage_default = ((double) EEPROM.read(124)) + ( ((double) EEPROM.read(125)) / 10.);
+    voltage_divider_ratio_default = ((double) EEPROM.read(125)) + ( ((double) EEPROM.read(126)) / 10.);    
   }
   else
   {
@@ -187,7 +194,7 @@ void setDefaults()
     tilt_down_speed_default = DEFAULT_TILT_DOWN_SPEED;
     degrees_default = DEFAULT_DEGREES;
     ticks_per_degree_of_tilt_default = TICKS_PER_DEGREE_OF_TILT;
-    td_reduction_default = TD_REDUCTION;
+    //td_reduction_default = TD_REDUCTION;
     turn_forever_speed_default = DEFAULT_TURN_FOREVER_SPEED;
     move_time_default = MOVE_TIME;
     tilt_time_default = TILT_TIME;
@@ -210,8 +217,8 @@ void setDefaults()
 
 void checkBattery()
 {
-  float voltage =  (float) ((analogRead(BATTERY_MONITOR_PIN) / 1023.) * 5.0 ) * VOLTAGE_DIVIDER_RATIO;
-  int batteryPercent =  (int) ( 100. * ( ( voltage - ZERO_PERCENT_BATTERY_VOLTAGE) / batteryRange)); // returns percentage
+  float voltage =  (float) ((analogRead(BATTERY_MONITOR_PIN) / 1023.) * 5.0 ) * voltage_divider_ratio_default;
+  int batteryPercent =  (int) ( 100. * ( ( voltage - zero_percent_battery_voltage_default) / batteryRange)); // returns percentage
   if (batteryPercent > 99) batteryPercent = 100;
   if (batteryPercent < 0) batteryPercent = 0;
   //batteryPercent = analogRead(batteryMonitorPin);  // for testing
@@ -254,20 +261,20 @@ void setupTiltEncoder()
 bool stopIfFault()
 {
   bool result = false;
-  if (motorDriver.getStatusA())
+  if (!motorDriver.getStatusA())
   {
       motorDriver.setBrakesAB();
       SERIAL_PORT.println("Fault detected in left motor ");
       result = true;
   }
-  if (motorDriver.getStatusB())
+  if (!motorDriver.getStatusB())
   {
       motorDriver.setBrakesAB();
       SERIAL_PORT.println("Fault detected in right motor ");
       result = true;
   }
   
-  if (motorDriver.getStatusC())
+  if (!motorDriver.getStatusC())
   {
       motorDriver.setBrakesC();
       SERIAL_PORT.println("Fault detected in top motor ");
@@ -297,28 +304,28 @@ void Stop()
 
 void accelerate(int targetSpeed)
 {
-  int goSpeed = MIN_ACCEL_SPEED;
+  int goSpeed = min_accel_speed_default;
   if (targetSpeed > 0)
   {
-    while (goSpeed < targetSpeed - DELTA_SPEED)
+    while (goSpeed < targetSpeed - delta_speed_default)
     {
-      motorDriver.setSpeedAB(goSpeed + LEFT_MOTOR_BIAS,goSpeed);
+      motorDriver.setSpeedAB(goSpeed + left_motor_bias_default,goSpeed);
       //SERIAL_PORT.println("moving, speed = ");
       //SERIAL_PORT.println(goSpeed);
-      goSpeed += DELTA_SPEED;
-      delay(ACCEL_DELAY);
+      goSpeed += delta_speed_default;
+      delay(accel_delay_default);
     }
   }
   else
   {
     targetSpeed = -targetSpeed;
-    while (goSpeed < targetSpeed - DELTA_SPEED)
+    while (goSpeed < targetSpeed - delta_speed_default)
     {
-      motorDriver.setSpeedAB(-goSpeed - LEFT_MOTOR_BIAS,-goSpeed);
+      motorDriver.setSpeedAB(-goSpeed - left_motor_bias_default,-goSpeed);
       //SERIAL_PORT.println("moving, speed = ");
       //SERIAL_PORT.println(-goSpeed);
-      goSpeed += DELTA_SPEED;
-      delay(ACCEL_DELAY);
+      goSpeed += delta_speed_default;
+      delay(accel_delay_default);
     }
   }
 }
@@ -328,27 +335,27 @@ void decelerate(int initialSpeed)
   int goSpeed;
   if (initialSpeed > 0)
   {
-    goSpeed = initialSpeed - DELTA_SPEED;
-    while (goSpeed > MIN_DECEL_SPEED + DELTA_SPEED)
+    goSpeed = initialSpeed - delta_speed_default;
+    while (goSpeed > min_decel_speed_default + delta_speed_default)
     {
-      motorDriver.setSpeedAB(goSpeed + LEFT_MOTOR_BIAS, goSpeed);
+      motorDriver.setSpeedAB(goSpeed + left_motor_bias_default, goSpeed);
       //SERIAL_PORT.println("moving, speed = ");
       //SERIAL_PORT.println(goSpeed);
-      goSpeed -= DELTA_SPEED;
-      delay(ACCEL_DELAY);
+      goSpeed -= delta_speed_default;
+      delay(accel_delay_default);
     }
   }
   else
   {
     initialSpeed = -initialSpeed;
-    goSpeed = initialSpeed - DELTA_SPEED;
-    while (goSpeed > MIN_DECEL_SPEED + DELTA_SPEED)
+    goSpeed = initialSpeed - delta_speed_default;
+    while (goSpeed > min_decel_speed_default + delta_speed_default)
     {
-      motorDriver.setSpeedAB(-goSpeed - LEFT_MOTOR_BIAS, -goSpeed);
+      motorDriver.setSpeedAB(-goSpeed - left_motor_bias_default, -goSpeed);
       //SERIAL_PORT.println("moving, speed = ");
       //SERIAL_PORT.println(-goSpeed);
-      goSpeed -= DELTA_SPEED;
-      delay(ACCEL_DELAY);
+      goSpeed -= delta_speed_default;
+      delay(accel_delay_default);
     }
   }    
 }
@@ -358,48 +365,48 @@ void decelerate(int initialSpeed)
 
 void moveForwardaLittle(int mySpeed)
 {
-  //mySpeed = DEFAULT_SPEED;  // speed goes from 0 to 255
+  //mySpeed = speed_default;  // speed goes from 0 to 255
   SERIAL_PORT.print("moving, speed = ");
   SERIAL_PORT.println(mySpeed);
   if (brakesOn) coast();
   long startingEncoderLeft = encoderCounterLeft;
   long startingEncoderRight = encoderCounterRight;
-  motorDriver.setSpeedAB(mySpeed + LEFT_MOTOR_BIAS, mySpeed);
+  motorDriver.setSpeedAB(mySpeed + left_motor_bias_default, mySpeed);
   if (mySpeed == 0 || stopIfFault()) Moving = false;
   else Moving = true;
   timeOutCheck = millis();
   delay(300);
   Stop();
   long cmMoved = (encoderCounterLeft - startingEncoderLeft) + (encoderCounterRight - startingEncoderRight);
-  cmMoved = (long) ( cmMoved / (2.0 * (float) ENCODER_TICKS_PER_CM));
+  cmMoved = (long) ( cmMoved / (2.0 * (float) encoder_ticks_per_cm_default));
   SERIAL_PORT.print("move distance in cm = ");
   SERIAL_PORT.println(cmMoved);
 }
 
 void moveForward(int mySpeed)
 {
-  //mySpeed = DEFAULT_SPEED;  // speed goes from 0 to 255
+  //mySpeed = speed_default;  // speed goes from 0 to 255
   SERIAL_PORT.print("moving, speed = ");
   SERIAL_PORT.println(mySpeed);
   if (brakesOn) coast();
 //  accelerate(mySpeed);
-  motorDriver.setSpeedAB(mySpeed + LEFT_MOTOR_BIAS, mySpeed);
+  motorDriver.setSpeedAB(mySpeed + left_motor_bias_default, mySpeed);
   if (mySpeed == 0 || stopIfFault()) Moving = false;
   else Moving = true;
   timeOutCheck = millis();
-  delay(MOVE_TIME);
+  delay(move_time_default);
 //  decelerate(mySpeed);
   Stop();
 }
 
 void moveForwardForever(int mySpeed)
 {
-  //mySpeed = DEFAULT_SPEED;  // speed goes from 0 to 255
+  //mySpeed = speed_default;  // speed goes from 0 to 255
   SERIAL_PORT.print("moving, speed = ");
   SERIAL_PORT.println(mySpeed);
   if (brakesOn) coast();
 //  accelerate(mySpeed);
-  motorDriver.setSpeedAB(mySpeed + LEFT_MOTOR_BIAS, mySpeed);
+  motorDriver.setSpeedAB(mySpeed + left_motor_bias_default, mySpeed);
   if (mySpeed == 0 || stopIfFault()) Moving = false;
   else Moving = true;
   timeOutCheck = millis(); 
@@ -407,12 +414,12 @@ void moveForwardForever(int mySpeed)
 
 void moveBackwardaLittle(int mySpeed)
 {
-  mySpeed = -DEFAULT_SPEED + BW_REDUCTION;  // speed goes from 0 to 255
+  mySpeed = -speed_default +  bw_reduction_default;  // speed goes from 0 to 255
   SERIAL_PORT.print("moving, speed = ");
   SERIAL_PORT.println(mySpeed);
   if (brakesOn) coast();
   //accelerate(mySpeed);
-  motorDriver.setSpeedAB(mySpeed - LEFT_MOTOR_BW_BIAS, mySpeed);
+  motorDriver.setSpeedAB(mySpeed - left_motor_bw_bias_default, mySpeed);
   if (mySpeed == 0 || stopIfFault()) Moving = false;
   else Moving = true;
   timeOutCheck = millis();
@@ -423,28 +430,28 @@ void moveBackwardaLittle(int mySpeed)
 
 void moveBackward(int mySpeed)
 {
-  mySpeed = -DEFAULT_SPEED + BW_REDUCTION;  // speed goes from 0 to 255// backward should be slower than forward
+  mySpeed = -speed_default +  bw_reduction_default;  // speed goes from 0 to 255// backward should be slower than forward
   SERIAL_PORT.print("moving, speed = ");
   SERIAL_PORT.println(mySpeed);
   if (brakesOn) coast();
   //accelerate(mySpeed);
-  motorDriver.setSpeedAB(mySpeed - LEFT_MOTOR_BW_BIAS, mySpeed);
+  motorDriver.setSpeedAB(mySpeed - left_motor_bw_bias_default, mySpeed);
   if (mySpeed == 0 || stopIfFault()) Moving = false;
   else Moving = true;
   timeOutCheck = millis();
-  delay(MOVE_TIME);
+  delay(move_time_default);
   //decelerate(mySpeed);
   Stop();
 }
 
 void moveBackwardForever(int mySpeed)
 {
-  mySpeed = -DEFAULT_SPEED + BW_REDUCTION;  // speed goes from 0 to 255 // backward should be slower than forward
+  mySpeed = -speed_default +  bw_reduction_default;  // speed goes from 0 to 255 // backward should be slower than forward
   SERIAL_PORT.print("moving, speed = ");
   SERIAL_PORT.println(mySpeed);
   if (brakesOn) coast();
   //accelerate(mySpeed);
-  motorDriver.setSpeedAB(mySpeed - LEFT_MOTOR_BW_BIAS, mySpeed);
+  motorDriver.setSpeedAB(mySpeed - left_motor_bw_bias_default, mySpeed);
   if (mySpeed == 0 || stopIfFault()) Moving = false;
   else Moving = true;
   timeOutCheck = millis();
@@ -452,7 +459,7 @@ void moveBackwardForever(int mySpeed)
 
 void turnRightForever(int mySpeed) // speed goes from 0 to 255
 {
-  mySpeed = DEFAULT_TURN_FOREVER_SPEED; 
+  mySpeed = turn_forever_speed_default; 
   SERIAL_PORT.print("turning, speed = ");
   SERIAL_PORT.println(mySpeed);
   if (brakesOn) coast();
@@ -464,7 +471,7 @@ void turnRightForever(int mySpeed) // speed goes from 0 to 255
 
 void turnRight(int mySpeed) // speed goes from 0 to 255
 {
-  mySpeed = DEFAULT_SPEED;  
+  mySpeed = speed_default;  
   SERIAL_PORT.print("turning, speed = ");
   SERIAL_PORT.println(mySpeed);
   if (brakesOn) coast();
@@ -478,7 +485,7 @@ void turnRight(int mySpeed) // speed goes from 0 to 255
 
 void turnLeftForever(int mySpeed) // speed goes from 0 to 255
 {
-  mySpeed = DEFAULT_TURN_FOREVER_SPEED; 
+  mySpeed = turn_forever_speed_default; 
   SERIAL_PORT.print("turning, speed = ");
   SERIAL_PORT.println(mySpeed);
   if (brakesOn) coast();
@@ -491,7 +498,7 @@ void turnLeftForever(int mySpeed) // speed goes from 0 to 255
 
 void turnLeft(int mySpeed) // speed goes from 0 to 255
 {
-  mySpeed = DEFAULT_SPEED; 
+  mySpeed = speed_default; 
   SERIAL_PORT.print("turning, speed = ");
   SERIAL_PORT.println(mySpeed);
   if (brakesOn) coast();
@@ -507,7 +514,7 @@ void turnLeft(int mySpeed) // speed goes from 0 to 255
 void tiltUp(int degreesToMove) // distance goes from 0 to 255
 {
   TCNT5=0;   // counter value = 0
-  mySpeed = DEFAULT_TILT_UP_SPEED; 
+  mySpeed = tilt_up_speed_default; 
   SERIAL_PORT.print("tilting up, degrees = ");
   SERIAL_PORT.println(degreesToMove);
   motorDriver.setSpeedC(mySpeed);
@@ -516,15 +523,15 @@ void tiltUp(int degreesToMove) // distance goes from 0 to 255
   Moving = true;
   timeOutCheck = millis();
   /*
-  if (TICKS_PER_DEGREE_OF_TILT > 1  && degreesToMove > 0 )
+  if (ticks_per_degree_of_tilt_default > 1  && degreesToMove > 0 )
   {
     SERIAL_PORT.println("number of counts recorded while tilting");
     long cycles = 0;
     long count = 0;
-    long targetCount = degreesToMove * TICKS_PER_DEGREE_OF_TILT;
+    long targetCount = degreesToMove * ticks_per_degree_of_tilt_default;
     int movementStopped = 0;
     int oldCount = 0;
-    while (count < targetCount && movementStopped < 3 && currentTopMotor < CURRENT_LIMIT_TOP_MOTOR)
+    while (count < targetCount && movementStopped < 3 && currentTopMotor < current_limit_top_motor_default)
     {
        if (TIFR5 & 0x01) // check to see if tilt encoder overflowed
        {
@@ -541,7 +548,7 @@ void tiltUp(int degreesToMove) // distance goes from 0 to 255
        SERIAL_PORT.println(currentTopMotor);
        delay(100);
     }
-    if (currentTopMotor >= CURRENT_LIMIT_TOP_MOTOR)
+    if (currentTopMotor >= current_limit_top_motor_default)
     {
       motorDriver.setSpeedC(0);
       delay(200);
@@ -564,7 +571,7 @@ void tiltUp(int degreesToMove) // distance goes from 0 to 255
     getMotorCurrents();
     SERIAL_PORT.print("Tilt motor current = ");
     SERIAL_PORT.println(currentTopMotor);
-    if (currentTopMotor >= CURRENT_LIMIT_TOP_MOTOR)
+    if (currentTopMotor >= current_limit_top_motor_default)
     {
       motorDriver.setSpeedC(0);
       delay(200);
@@ -580,8 +587,10 @@ void tiltUp(int degreesToMove) // distance goes from 0 to 255
       //delay(100);
       //tiltDown(5);
       return; 
+     
     }
-    delay(TILT_TIME/10);
+    
+    delay(tilt_time_default/10);
  }
   
   motorDriver.setBrakesC();   
@@ -594,7 +603,7 @@ void tiltUp(int degreesToMove) // distance goes from 0 to 255
 void tiltDown(int degreesToMove)
 {
   TCNT5=0;   // counter value = 0
-  mySpeed = -DEFAULT_TILT_DOWN_SPEED; 
+  mySpeed = -tilt_down_speed_default; 
   SERIAL_PORT.print("tilting down, degrees = ");
   SERIAL_PORT.println(degreesToMove);
   motorDriver.setSpeedC(mySpeed);
@@ -604,14 +613,14 @@ void tiltDown(int degreesToMove)
   timeOutCheck = millis();
   
   /*
-  if (TICKS_PER_DEGREE_OF_TILT > 1 && degreesToMove > 0 )
+  if (ticks_per_degree_of_tilt_default > 1 && degreesToMove > 0 )
   {
     long cycles = 0;
     long count = 0;
-    long targetCount = degreesToMove * TICKS_PER_DEGREE_OF_TILT;
+    long targetCount = degreesToMove * ticks_per_degree_of_tilt_default;
     int movementStopped = 0;
     int oldCount = 0;
-    while (count < targetCount && movementStopped < 3 && currentTopMotor < CURRENT_LIMIT_TOP_MOTOR)
+    while (count < targetCount && movementStopped < 3 && currentTopMotor < current_limit_top_motor_default)
     {
        if (TIFR5 & 0x01) // check to see if tilt encoder overflowed
        {
@@ -628,7 +637,7 @@ void tiltDown(int degreesToMove)
        SERIAL_PORT.println(currentTopMotor);
        delay(100);
     }
-    if (currentTopMotor >= CURRENT_LIMIT_TOP_MOTOR)
+    if (currentTopMotor >= current_limit_top_motor_default)
     {
       motorDriver.setSpeedC(0);
       delay(200);
@@ -651,7 +660,7 @@ void tiltDown(int degreesToMove)
     getMotorCurrents();
     SERIAL_PORT.print("Tilt motor current = ");
     SERIAL_PORT.println(currentTopMotor);
-    if (currentTopMotor >= CURRENT_LIMIT_TOP_MOTOR)
+    if (currentTopMotor >= current_limit_top_motor_default)
     {
       motorDriver.setSpeedC(0);
       delay(200);
@@ -668,7 +677,7 @@ void tiltDown(int degreesToMove)
       //tiltUp(5);
       return; 
     }
-    delay(TILT_TIME/10);
+    delay(tilt_time_default/10);
  }
 
   
@@ -688,15 +697,24 @@ void getMotorCurrents()
 // process a command string
 void HandleCommand(char* input, int length)
 {
-  int speedToGo = DEFAULT_SPEED;
-  int degreesToGo = DEFAULT_DEGREES;  // degrees of tilt
-  int value = 0;
+  int speedToGo = speed_default;
+  int degreesToGo = degrees_default;  // degrees of tilt
+  long value = 0;
   // calculate number following command
   if (length > 1)
   {
     value = atoi(&input[1]);
-    speedToGo = value;                  // either servo steps or speed specified
-    degreesToGo = value;
+    if (value < 256)
+    {
+      speedToGo = value;                  // either servo steps or speed specified or eeprom address to read
+      degreesToGo = value;
+      EEPROMaddress = value;
+    }
+    else  // means we are writing to the EEPROM
+    {
+      EEPROMvalue =  value % 1000;  // the lower three digits are the value
+      EEPROMaddress = value - EEPROMvalue;  // the upper three digits are the address
+    }
   }
 
   // check commands
@@ -748,6 +766,33 @@ void HandleCommand(char* input, int length)
     case 'p':
       checkBattery(); // note that this writes a single char, so value should be in range 0-255
       break;    
+    case 'E':
+      EEPROMvalue = readFromEEPROM(EEPROMaddress);
+      SERIAL_PORT_BLUETOOTH.print("MESSAGE_EEPROM_VALUE");  // lead with "mE"  
+                                      // 'm' indicates that this is a message for the server
+                                      // 'E' indicates that it is an EEPROM value
+      SERIAL_PORT_BLUETOOTH.println(EEPROMvalue); 
+      break;
+    case 'Z':
+      enableEEPROMwrite = true;
+      SERIAL_PORT.print("EEPROM writing enabled.");
+      break;
+    case 'z':
+      enableEEPROMwrite = false;
+      SERIAL_PORT.print("EEPROM writing disabled.");
+      break;
+    case 'v':
+      if (enableEEPROMwrite)
+      {
+        writeToEEPROM(EEPROMaddress, EEPROMvalue);
+        SERIAL_PORT.print("Value = ");
+        SERIAL_PORT.print(EEPROMvalue);
+        SERIAL_PORT.print(" was written to EEPROM address = ");
+        SERIAL_PORT.print(EEPROMaddress);
+      }
+      else SERIAL_PORT.print("EEPROM write requested when writing not enabled");
+      break;
+        
     default:
       SERIAL_PORT.print("did not recognize command: ");
        if (input[0] == 13) SERIAL_PORT.print(" 13 ");
@@ -770,13 +815,13 @@ void doEncoderRight()
   encoderCounterRight++;
 }
 
-void writeDefaultValue(int address, byte value)
+void writeToEEPROM(int address, byte value)
 {
   if (address > 4095 || address < 0) return;
   EEPROM.write(address, value);
 }
 
-int readDefaultValue(int address)
+int readFromEEPROM(int address)
 {
   if (address > 4095 || address < 0) return -1;
   return EEPROM.read(address);
@@ -785,15 +830,12 @@ int readDefaultValue(int address)
 
 void setup()  
 {
+  setDefaults();
   SERIAL_PORT.begin(SERIAL_SPEED);
   SERIAL_PORT.println("ready for commands");
   SERIAL_PORT_BLUETOOTH.begin(BLUETOOTH_SPEED);   // usually connect to bluetooth on serial2
   motorDriver.setCoastAB();
   motorDriver.setBrakesC();
-  
-  //setupTiltEncoder();
-
-  eepromAddress = 0;
   
   // attach interrupts
   // encoder pin for left motor is on interrupt 5 (pin 18)
@@ -803,7 +845,7 @@ void setup()
   
   getMotorCurrents();
   
-  batteryRange = FULL_BATTERY_VOLTAGE - ZERO_PERCENT_BATTERY_VOLTAGE;
+  batteryRange = full_battery_voltage_default - zero_percent_battery_voltage_default;
   
   for (int i=0; i< INPUT_BUFFER_SIZE; i++) inputBuffer[i] = 0;
   
@@ -818,7 +860,7 @@ void loop()
   {
     while (!SERIAL_PORT_BLUETOOTH.available()) // wait for input
     {
-       if (millis() - timeOutCheck > TIMED_OUT && Moving) Stop();  //if we are moving and haven't heard anything in a long time, stop moving 
+       if (millis() - timeOutCheck > timed_out_default && Moving) Stop();  //if we are moving and haven't heard anything in a long time, stop moving 
        getMotorCurrents();
        delay(10);
     }
