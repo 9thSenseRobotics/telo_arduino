@@ -73,40 +73,6 @@ threeMotorsDriverPCB::threeMotorsDriverPCB()
     analogWrite(PWMC, 0);
 }
 
-void threeMotorsDriverPCB::setSpeedA(int speed)
-{
-    if (speed < 0)
-    {
-        digitalWrite(IN1A,LOW);
-        digitalWrite(IN2A,HIGH);   // turn reverse
-        speed = -speed;
-    }
-    else
-    {
-        digitalWrite(IN1A,HIGH);
-        digitalWrite(IN2A,LOW);   // turn forward
-    }
-    if (speed > 255) speed = 255;
-    analogWrite(PWMA, speed);
-}
-
-void threeMotorsDriverPCB::setSpeedB(int speed)
-{
-    if (speed < 0)
-    {
-        digitalWrite(IN1B,LOW);
-        digitalWrite(IN2B,HIGH);   // turn reverse
-        speed = -speed;
-    }
-    else
-    {
-        digitalWrite(IN1B,HIGH);
-        digitalWrite(IN2B,LOW);   // turn forward
-    }
-    if (speed > 255) speed = 255;
-    analogWrite(PWMB, speed);
-}   
-
 void threeMotorsDriverPCB::setSpeedC(int speed)
 {
     if (speed < 0)
@@ -126,29 +92,29 @@ void threeMotorsDriverPCB::setSpeedC(int speed)
 
 void threeMotorsDriverPCB::setSpeedAB(int speedA, int speedB)
 {
-    if (speedA < 0)
+	if (speedA < 0)
     {
         digitalWrite(IN1A,LOW);
-        digitalWrite(IN2A,HIGH);   // move backwards
+        digitalWrite(IN2A,HIGH);   
         speedA = -speedA;
     }
     else
     {
         digitalWrite(IN1A,HIGH);
-        digitalWrite(IN2A,LOW);   // move forward
+        digitalWrite(IN2A,LOW);   
     }
     if (speedA > 255) speedA = 255;
     
     if (speedB < 0)
     {
         digitalWrite(IN1B,LOW);
-        digitalWrite(IN2B,HIGH);   // turn reverse
+        digitalWrite(IN2B,HIGH);   
         speedB = -speedB;
     }
     else
     {
         digitalWrite(IN1B,HIGH);
-        digitalWrite(IN2B,LOW);   // turn forward
+        digitalWrite(IN2B,LOW); 
     }
     analogWrite(PWMA, speedA);
     analogWrite(PWMB, speedB);
@@ -157,6 +123,8 @@ void threeMotorsDriverPCB::setSpeedAB(int speedA, int speedB)
 void threeMotorsDriverPCB::setBrakesC()
 {
     analogWrite(PWMC, 0);
+	digitalWrite(IN1C, LOW);
+    digitalWrite(IN2C, LOW);
 }
 
 void threeMotorsDriverPCB::setBrakesAB()
