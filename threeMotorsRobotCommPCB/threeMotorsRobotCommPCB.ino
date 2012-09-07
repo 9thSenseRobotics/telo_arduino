@@ -132,7 +132,7 @@ threeMotorsDriverPCB motorDriver;
 
 char inputBuffer[INPUT_BUFFER_SIZE], charIn;
 int tiltPos, inputLength, mySpeed;
-bool Moving, brakesOn, exceededCurrentLimitC = false, enableEEPROMwrite = false;
+bool Moving, brakesOn, exceededCurrentLimitC = false, enableEEPROMwrite = false, usingEEPROM = false;
 long timeOutCheck;
 float batteryRange;
 int currentTopMotor, currentRightMotor, currentLeftMotor;
@@ -160,7 +160,8 @@ void setDefaults()
     EEPROM.read(11) == EEPROM_TEST_VALUE_11 &&
     EEPROM.read(12) == EEPROM_TEST_VALUE_12)  // test to see if we have written to the EEPROM
   {
-    timed_out_default = EEPROM.read(101);
+    usingEEPROM = true;
+    timed_out_default = EEPROM.read(101) * 100;  // mult by 100 so that we could keep the EEPROM value < 256
     speed_default = EEPROM.read(102);
     bw_reduction_default = EEPROM.read(103);
     tilt_up_speed_default = EEPROM.read(104);
@@ -178,12 +179,12 @@ void setDefaults()
     left_motor_bias_default = EEPROM.read(116);
     left_motor_bw_bias_default = EEPROM.read(117);
     left_motor_stop_delay_default = EEPROM.read(118);
-    current_limit_top_motor_default = EEPROM.read(119)*10;     // multiply to keep the eeprom parameter < 255
-    current_limit_drive_motors_default = EEPROM.read(120)*100; // multiply to keep the eeprom parameter < 255
+    current_limit_top_motor_default = EEPROM.read(119)*10;     // multiply to keep the eeprom parameter < 256
+    current_limit_drive_motors_default = EEPROM.read(120)*100; // multiply to keep the eeprom parameter < 256
     encoder_ticks_per_cm_default = EEPROM.read(121);
     zero_percent_battery_voltage_default = ((double) EEPROM.read(122)) + (( (double) EEPROM.read(123)) / 10.);
     full_battery_voltage_default = ((double) EEPROM.read(124)) + ( ((double) EEPROM.read(125)) / 10.);
-    voltage_divider_ratio_default = ((double) EEPROM.read(125)) + ( ((double) EEPROM.read(126)) / 10.);    
+    voltage_divider_ratio_default = ((double) EEPROM.read(125)) + ( ((double) EEPROM.read(126)) / 10.);   
   }
   else
   {
@@ -830,8 +831,15 @@ int readFromEEPROM(int address)
 
 void setup()  
 {
-  setDefaults();
   SERIAL_PORT.begin(SERIAL_SPEED);
+  setDefaults();
+  if (usingEEPROM)
+  {
+    SERIAL_PORT.println("EEPROM values used");
+    SERIAL_PORT.print("timed_out_default = ");
+    SERIAL_PORT.println(timed_out_default); 
+  }
+
   SERIAL_PORT.println("ready for commands");
   SERIAL_PORT_BLUETOOTH.begin(BLUETOOTH_SPEED);   // usually connect to bluetooth on serial2
   motorDriver.setCoastAB();
@@ -856,6 +864,7 @@ void loop()
 {
   inputLength = 0;
   charIn = 0;
+  int testCount = 0;
   while (charIn != COMMAND_END_CHARACTER && inputLength < INPUT_BUFFER_SIZE)
   {
     while (!SERIAL_PORT_BLUETOOTH.available()) // wait for input
@@ -863,13 +872,19 @@ void loop()
        if (millis() - timeOutCheck > timed_out_default && Moving) Stop();  //if we are moving and haven't heard anything in a long time, stop moving 
        getMotorCurrents();
        delay(10);
+       if (testCount % 1000 == 0)
+       {
+          testCount = 0;
+          SERIAL_PORT.println("still waiting");
+       }
+       testCount++;
     }
     charIn = SERIAL_PORT_BLUETOOTH.read(); // read it in
     if (charIn != 13 && charIn != 10 && charIn != 32)  // ignore carriage returns, line feeds, and spaces
     {
        inputBuffer[inputLength] = charIn;
        inputLength++;
-       //SERIAL_PORT.print(charIn);
+       SERIAL_PORT.print(charIn);
     }
   } 
   

@@ -18,7 +18,7 @@
 #define EEPROM_TEST_VALUE_11 4
 #define EEPROM_TEST_VALUE_12 8
 
-#define TIMED_OUT 2000
+#define TIMED_OUT 30  // this gets multiplied by 100 in actual use.  have to keep parameters < 256
 #define DEFAULT_SPEED 220
 #define BW_REDUCTION 50
 #define DEFAULT_TILT_UP_SPEED 180
@@ -76,7 +76,7 @@ void setDefaults()
   EEPROM.write(11, EEPROM_TEST_VALUE_11);
   EEPROM.write(12, EEPROM_TEST_VALUE_12);
   
-  EEPROM.write(101, TIMED_OUT);
+  EEPROM.write(101, TIMED_OUT);  // have to keep it down under 256
   EEPROM.write(102, DEFAULT_SPEED);
   EEPROM.write(103, BW_REDUCTION);
   EEPROM.write(104, DEFAULT_TILT_UP_SPEED);
@@ -154,6 +154,16 @@ void HandleCommand(char* input, int length)
         SERIAL_PORT.print(EEPROMvalue);
         SERIAL_PORT.print(" was read from EEPROM address = ");
         SERIAL_PORT.print(EEPROMaddress);
+        if (EEPROMaddress == 101 || EEPROMaddress == 120)
+        {
+           SERIAL_PORT.print(" but actual parameter used is ");
+           SERIAL_PORT.println(EEPROMvalue * 100);
+        } 
+        if (EEPROMaddress == 119)
+        {
+           SERIAL_PORT.print(" but actual parameter used is ");
+           SERIAL_PORT.println(EEPROMvalue * 10);
+        }
       break;
     case 'Z':
       enableEEPROMwrite = true;
@@ -238,7 +248,7 @@ void HandleCommand(char* input, int length)
   if (inputBuffer[0] != COMM_CHECK_CHARACTER && inputLength > 0) HandleCommand(inputBuffer, inputLength);
    
   // echo the command
-  SERIAL_PORT.println(inputBuffer); // need to println because android uses the CR as a delimiter
+  //SERIAL_PORT.println(inputBuffer); // need to println because android uses the CR as a delimiter
   for (int i = 0; i < inputLength; i++) inputBuffer[i] = 0;
 }
 
