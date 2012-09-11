@@ -104,9 +104,9 @@
 #define DEFAULT_TURN_FOREVER_SPEED 220
 #define MOVE_TIME 100
 #define TILT_TIME 500
-#define MIN_ACCEL_SPEED 100
+#define MIN_ACCEL_SPEED 120
 #define MIN_DECEL_SPEED 60
-#define DELTA_SPEED 10
+#define DELTA_SPEED 60
 #define ACCEL_DELAY 200
 #define LEFT_MOTOR_BIAS 10
 #define LEFT_MOTOR_BW_BIAS 23
@@ -402,11 +402,11 @@ void moveForward(int mySpeed)
 
 void moveForwardForever(int mySpeed)
 {
-  //mySpeed = speed_default;  // speed goes from 0 to 255
+  //mySpeed = DEFAULT_SPEED;  // speed goes from 0 to 255
   SERIAL_PORT.print("moving, speed = ");
   SERIAL_PORT.println(mySpeed);
   if (brakesOn) coast();
-//  accelerate(mySpeed);
+  accelerate(mySpeed);
   motorDriver.setSpeedAB(mySpeed + left_motor_bias_default, mySpeed);
   if (mySpeed == 0 || stopIfFault()) Moving = false;
   else Moving = true;
