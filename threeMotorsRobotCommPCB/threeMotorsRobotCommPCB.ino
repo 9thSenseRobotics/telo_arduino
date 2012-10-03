@@ -93,7 +93,7 @@
 #define EEPROM_TEST_VALUE_12 8
 
 // EEPROM written defines
-#define TIMED_OUT 3000
+#define TIMED_OUT 30 // this gets multiplied by 100 in actual use.  have to keep parameters < 256
 #define DEFAULT_SPEED 220
 #define BW_REDUCTION 50
 #define DEFAULT_TILT_UP_SPEED 180
@@ -102,7 +102,8 @@
 #define TICKS_PER_DEGREE_OF_TILT 30
 //#define TD_REDUCTION 50
 #define DEFAULT_TURN_FOREVER_SPEED 220
-#define MOVE_TIME 100
+#define MOVE_TIME 200
+#define TURN_TIME 200
 #define TILT_TIME 500
 #define MIN_ACCEL_SPEED 120
 #define MIN_DECEL_SPEED 60
@@ -111,8 +112,8 @@
 #define LEFT_MOTOR_BIAS 10
 #define LEFT_MOTOR_BW_BIAS 23
 #define LEFT_MOTOR_STOP_DELAY 0
-#define CURRENT_LIMIT_TOP_MOTOR 2000
-#define CURRENT_LIMIT_DRIVE_MOTORS 4500
+#define CURRENT_LIMIT_TOP_MOTOR 40  // multiply to keep the eeprom parameter < 255
+#define CURRENT_LIMIT_DRIVE_MOTORS 40 // multiply to keep the eeprom parameter < 255
 // one turn of the motor = 960 steps in the encoder.
 // with large vex wheel, one rotation = 42 cm
 // so we have 23 steps per cm
@@ -142,7 +143,7 @@ unsigned int lastReportedCounterLeft = 1, lastReportedCounterRight = 1;
 int program_version;
 int timed_out_default, speed_default, bw_reduction_default, tilt_up_speed_default;
 int tilt_down_speed_default, degrees_default, ticks_per_degree_of_tilt_default;
-//int td_reduction_default;
+int turn_time_default;
 int turn_forever_speed_default, move_time_default, tilt_time_default;
 int min_accel_speed_default, min_decel_speed_default, delta_speed_default, accel_delay_default;
 int left_motor_bias_default, left_motor_bw_bias_default, left_motor_stop_delay_default;
@@ -168,8 +169,8 @@ void setDefaults()
     tilt_down_speed_default = EEPROM.read(105);
     degrees_default = EEPROM.read(106);
     ticks_per_degree_of_tilt_default = EEPROM.read(107);
-    //td_reduction_default = EEPROM.read(108);
-    turn_forever_speed_default = EEPROM.read(109);
+    turn_forever_speed_default = EEPROM.read(108);
+    turn_time_default = EEPROM.read(109);
     move_time_default = EEPROM.read(110);
     tilt_time_default = EEPROM.read(111);
     min_accel_speed_default = EEPROM.read(112);
@@ -179,7 +180,7 @@ void setDefaults()
     left_motor_bias_default = EEPROM.read(116);
     left_motor_bw_bias_default = EEPROM.read(117);
     left_motor_stop_delay_default = EEPROM.read(118);
-    current_limit_top_motor_default = EEPROM.read(119)*10;     // multiply to keep the eeprom parameter < 256
+    current_limit_top_motor_default = EEPROM.read(119)*100;     // multiply to keep the eeprom parameter < 256
     current_limit_drive_motors_default = EEPROM.read(120)*100; // multiply to keep the eeprom parameter < 256
     encoder_ticks_per_cm_default = EEPROM.read(121);
     zero_percent_battery_voltage_default = ((double) EEPROM.read(122)) + (( (double) EEPROM.read(123)) / 10.);
@@ -195,8 +196,8 @@ void setDefaults()
     tilt_down_speed_default = DEFAULT_TILT_DOWN_SPEED;
     degrees_default = DEFAULT_DEGREES;
     ticks_per_degree_of_tilt_default = TICKS_PER_DEGREE_OF_TILT;
-    //td_reduction_default = TD_REDUCTION;
     turn_forever_speed_default = DEFAULT_TURN_FOREVER_SPEED;
+    turn_time_default = TURN_TIME;
     move_time_default = MOVE_TIME;
     tilt_time_default = TILT_TIME;
     min_accel_speed_default = MIN_ACCEL_SPEED;
@@ -206,8 +207,8 @@ void setDefaults()
     left_motor_bias_default = LEFT_MOTOR_BIAS;
     left_motor_bw_bias_default = LEFT_MOTOR_BW_BIAS;
     left_motor_stop_delay_default = LEFT_MOTOR_STOP_DELAY;
-    current_limit_top_motor_default = CURRENT_LIMIT_TOP_MOTOR;
-    current_limit_drive_motors_default = CURRENT_LIMIT_DRIVE_MOTORS;
+    current_limit_top_motor_default = CURRENT_LIMIT_TOP_MOTOR * 100;  // multiply to keep the eeprom parameter < 255
+    current_limit_drive_motors_default = CURRENT_LIMIT_DRIVE_MOTORS * 100;  // multiply to keep the eeprom parameter < 255
     encoder_ticks_per_cm_default = ENCODER_TICKS_PER_CM;
     //battery_monitor_pin_default = BATTERY_MONITOR_PIN;
     zero_percent_battery_voltage_default = ZERO_PERCENT_BATTERY_VOLTAGE;

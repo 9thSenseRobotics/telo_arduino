@@ -2,6 +2,10 @@
 // accepts serial port inputs and responds with moves and tilts
 // requires a Mega to work, not an Uno or Nano, due to the need for two serial inputs
 
+// version 0.71:
+// even simpler routines now, just turn and move
+// fixed but in turn that had us turning only to the right
+//
 // version 0.70 changes:
 // EEPROM writes and reads are now used for all dynamic parameters
 // move, turn, and tilt routines simplified
