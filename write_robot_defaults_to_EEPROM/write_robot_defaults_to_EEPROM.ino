@@ -10,7 +10,7 @@
 
 // set customer number and the software/hardware versions we are going to use with this bot
 #define customer_number 0
-#define software_version 65
+#define software_version 70
 #define hardware_version 1
 
 // these are used to determine if this program was run, indicating bot should use EEPROM data
@@ -25,10 +25,13 @@
 #define DEFAULT_TILT_DOWN_SPEED 135
 #define DEFAULT_DEGREES 10
 #define TICKS_PER_DEGREE_OF_TILT 30
-//#define TD_REDUCTION 50
 #define DEFAULT_TURN_FOREVER_SPEED 220
-#define MOVE_TIME 100
+#define TURN_TIME 500
+#define MOVE_TIME 1000
 #define TILT_TIME 500
+#define NUDGE_TURN_TIME 200
+#define NUDGE_MOVE_TIME 300
+#define NUDGE_TILT_TIME 200
 #define MIN_ACCEL_SPEED 120
 #define MIN_DECEL_SPEED 60
 #define DELTA_SPEED 60
@@ -37,18 +40,12 @@
 #define LEFT_MOTOR_BW_BIAS 23
 #define LEFT_MOTOR_STOP_DELAY 0
 // next two are modified so that they stay under 255
-#define CURRENT_LIMIT_TOP_MOTOR 120  // this gets multiplied by 10 in actual use
+#define CURRENT_LIMIT_TOP_MOTOR 40  // this gets multiplied by 100 in actual use
 #define CURRENT_LIMIT_DRIVE_MOTORS 40 // this gets multiplied by 100 in actual use
 // one turn of the motor = 960 steps in the encoder.
 // with large vex wheel, one rotation = 42 cm
 // so we have 23 steps per cm
 #define ENCODER_TICKS_PER_CM 23
-
-//#define TILT_CENTER 85
-//#define TILT_LOOK_DOWN 135
-//#define TILT_MIN 55
-//#define TILT_MAX 165
-//#define TILT_DELTA 10
 
 //#define ZERO_PERCENT_BATTERY_VOLTAGE 10.5
 //#define FULL_BATTERY_VOLTAGE 13.0
@@ -83,10 +80,13 @@ void setDefaults()
   EEPROM.write(105, DEFAULT_TILT_DOWN_SPEED);
   EEPROM.write(106, DEFAULT_DEGREES);
   EEPROM.write(107, TICKS_PER_DEGREE_OF_TILT);
-  //EEPROM.write(108, TD_REDUCTION);
-  EEPROM.write(109, DEFAULT_TURN_FOREVER_SPEED);
+  EEPROM.write(108, DEFAULT_TURN_FOREVER_SPEED);
+  EEPROM.write(109, TURN_TIME);
   EEPROM.write(110, MOVE_TIME);
   EEPROM.write(111, TILT_TIME);
+//  EEPROM.write(201, NUDGE_TURN_TIME);  // put in below to keep list in address number order
+//  EEPROM.write(202, NUDGE_MOVE_TIME);
+//  EEPROM.write(203, NUDGE_TILT_TIME);
   EEPROM.write(112, MIN_ACCEL_SPEED);
   EEPROM.write(113, MIN_DECEL_SPEED);
   EEPROM.write(114, DELTA_SPEED);
@@ -103,6 +103,10 @@ void setDefaults()
   EEPROM.write(125, DECIMAL_FULL_BATTERY_VOLTAGE);
   EEPROM.write(126, INTEGER_VOLTAGE_DIVIDER_RATIO);
   EEPROM.write(127, DECIMAL_VOLTAGE_DIVIDER_RATIO);
+  
+  EEPROM.write(201, NUDGE_TURN_TIME);
+  EEPROM.write(202, NUDGE_MOVE_TIME);
+  EEPROM.write(203, NUDGE_TILT_TIME);
   }
   
   void writeToEEPROM(int address, byte value)
