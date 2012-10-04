@@ -40,8 +40,9 @@
 #define LEFT_MOTOR_BW_BIAS 23
 #define LEFT_MOTOR_STOP_DELAY 0
 // next two are modified so that they stay under 255
-#define CURRENT_LIMIT_TOP_MOTOR 40  // this gets multiplied by 100 in actual use
+#define CURRENT_LIMIT_TOP_MOTOR 20  // this gets multiplied by 100 in actual use
 #define CURRENT_LIMIT_DRIVE_MOTORS 40 // this gets multiplied by 100 in actual use
+#define CURRENT_LIMIT_ENABLED 1
 // one turn of the motor = 960 steps in the encoder.
 // with large vex wheel, one rotation = 42 cm
 // so we have 23 steps per cm
@@ -96,6 +97,7 @@ void setDefaults()
   EEPROM.write(118, LEFT_MOTOR_STOP_DELAY);
   EEPROM.write(119, CURRENT_LIMIT_TOP_MOTOR);     // multiply to keep the eeprom parameter < 255
   EEPROM.write(120, CURRENT_LIMIT_DRIVE_MOTORS); // multiply to keep the eeprom parameter < 255
+  //EEPROM.write(204, CURRENT_LIMIT_ENABLED);
   EEPROM.write(121, ENCODER_TICKS_PER_CM);
   EEPROM.write(122, INTEGER_ZERO_PERCENT_BATTERY_VOLTAGE);
   EEPROM.write(123, DECIMAL_ZERO_PERCENT_BATTERY_VOLTAGE);
@@ -107,6 +109,7 @@ void setDefaults()
   EEPROM.write(201, NUDGE_TURN_TIME);
   EEPROM.write(202, NUDGE_MOVE_TIME);
   EEPROM.write(203, NUDGE_TILT_TIME);
+  EEPROM.write(204, CURRENT_LIMIT_ENABLED);
   }
   
   void writeToEEPROM(int address, byte value)

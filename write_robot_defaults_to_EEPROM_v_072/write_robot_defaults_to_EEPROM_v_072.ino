@@ -13,6 +13,7 @@
 #define customer_number 0
 #define software_version 72
 #define hardware_version 1
+#define BT "00:06:66:46:5A:60"
 
 // these are used to determine if this program was run, indicating bot should use EEPROM data
 #define EEPROM_TEST_VALUE_10 2
@@ -111,6 +112,7 @@ void setDefaults()
   EEPROM.write(202, NUDGE_MOVE_TIME);
   EEPROM.write(203, NUDGE_TILT_TIME);
   EEPROM.write(204, CURRENT_LIMIT_ENABLED);
+  writeBTaddress();
   }
   
   void writeToEEPROM(int address, byte value)
@@ -124,6 +126,28 @@ void setDefaults()
     if (address > 4095 || address < 0) return -1;
     return EEPROM.read(address);
   }
+  
+  void writeBTaddress()
+  {
+    char buffer[18] = BT;
+    for (int i= 0; i < 17; i++)
+    {
+      EEPROM.write(300 + i, buffer[i]);
+    }
+  }
+  
+  void readBTaddress()
+  {
+    char buffer[18];
+    for (int i= 0; i < 17; i++)
+    {
+      buffer[i] = EEPROM.read(300 + i);
+    }
+    SERIAL_PORT.print("Bluetooth address is: ");
+    for (int i=0; i < 17; i++) SERIAL_PORT.print(buffer[i]);
+    SERIAL_PORT.println();
+  }
+      
 
 // process a command string
 void HandleCommand(char* input, int length)
@@ -191,6 +215,10 @@ void HandleCommand(char* input, int length)
         SERIAL_PORT.print(EEPROMaddress);
       }
       else SERIAL_PORT.print("EEPROM write requested when writing not enabled");
+      break;
+    case 'a':
+    case 'A':
+      readBTaddress();
       break;
         
     default:

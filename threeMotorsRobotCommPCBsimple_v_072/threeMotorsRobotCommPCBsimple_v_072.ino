@@ -174,7 +174,7 @@ void setDefaults()
     encoder_ticks_per_cm_default = EEPROM.read(121);
     zero_percent_battery_voltage_default = ((double) EEPROM.read(122)) + (( (double) EEPROM.read(123)) / 10.);
     full_battery_voltage_default = ((double) EEPROM.read(124)) + ( ((double) EEPROM.read(125)) / 10.);
-    voltage_divider_ratio_default = ((double) EEPROM.read(125)) + ( ((double) EEPROM.read(126)) / 10.);    
+    voltage_divider_ratio_default = ((double) EEPROM.read(126)) + ( ((double) EEPROM.read(127)) / 10.);    
   }
   else
   {
@@ -215,11 +215,11 @@ void checkBattery()
   int batteryPercent =  (int) ( 100. * ( ( voltage - zero_percent_battery_voltage_default) / batteryRange)); // returns percentage
   if (batteryPercent > 99) batteryPercent = 100;
   if (batteryPercent < 0) batteryPercent = 0;
-  //batteryPercent = analogRead(batteryMonitorPin);  // for testing
+  //batteryPercent = analogRead(BATTERY_MONITOR_PIN);  // for testing
   SERIAL_PORT_BLUETOOTH.print("MESSAGE_BATTERY_PERCENT");  // lead with "mb"  
                                       // 'm' indicates that this is a message for the server
                                       // 'b' indicates that it is a battery percent messsage
-  SERIAL_PORT_BLUETOOTH.println(batteryPercent); 
+  SERIAL_PORT_BLUETOOTH.println(batteryPercent);  
 } 
 
 bool checkForFault()
@@ -420,6 +420,21 @@ void getMotorCurrents()
   }
 }
 
+void monitorMotorCurrents()
+{
+  currentLeftMotor = motorDriver.getCurrentA();
+  currentRightMotor = motorDriver.getCurrentB();
+  currentTopMotor = motorDriver.getCurrentC();
+  if (currentLeftMotor > 50 || currentRightMotor > 50 || currentTopMotor > 50)
+  {
+    SERIAL_PORT.print("Motor current Left, Right, Top = ");
+    SERIAL_PORT.print(currentLeftMotor);
+    SERIAL_PORT.print(", ");
+    SERIAL_PORT.print(currentRightMotor);
+    SERIAL_PORT.print(", ");
+    SERIAL_PORT.println(currentTopMotor);
+  }
+}
 
 void writeToEEPROM(int address, byte value)
 {
@@ -432,6 +447,19 @@ int readFromEEPROM(int address)
   if (address > 4095 || address < 0) return -1;
   return EEPROM.read(address);
 }
+
+void readBTaddress()
+{
+  char buffer[18];
+  for (int i= 0; i < 17; i++)
+  {
+    buffer[i] = EEPROM.read(300 + i);
+  }
+  SERIAL_PORT.print("Bluetooth address is: ");
+  for (int i=0; i < 17; i++) SERIAL_PORT.print(buffer[i]);
+  SERIAL_PORT.println();
+}
+   
 
 // process a command string
 void HandleCommand(char* input, int length)
@@ -564,6 +592,10 @@ void HandleCommand(char* input, int length)
       }
       else SERIAL_PORT.print("EEPROM write requested when writing not enabled");
       break;
+    case 'a':
+    case 'A':
+      readBTaddress();
+      break;
         
     default:
       SERIAL_PORT.print("did not recognize command: ");
@@ -611,6 +643,7 @@ void loop()
         Moving = false;
       }
        getMotorCurrents();
+       //monitorMotorCurrents();
        delay(10);
     }
     // got a character on the bluetooth port
