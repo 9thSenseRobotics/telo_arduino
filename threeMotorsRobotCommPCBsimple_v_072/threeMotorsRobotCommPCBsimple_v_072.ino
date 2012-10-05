@@ -673,7 +673,7 @@ void loop()
     SERIAL_PORT.println();
   }
   
-  // throw away the line end character
+  // throw away the command end character
   inputLength -= 1;  // -1 because it is incremented after the last character
   inputBuffer[inputLength] = 0;  // change COMMAND_END_CHARACTER to a 0 (remember, index is one behind inputLength)
   
