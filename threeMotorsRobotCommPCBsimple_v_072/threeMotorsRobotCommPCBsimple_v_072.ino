@@ -209,17 +209,14 @@ void setDefaults()
   }
 }
 
-void checkBattery()
+int checkBattery()
 {
   float voltage =  (float) ((analogRead(BATTERY_MONITOR_PIN) / 1023.) * 5.0 ) * voltage_divider_ratio_default;
   int batteryPercent =  (int) ( 100. * ( ( voltage - zero_percent_battery_voltage_default) / batteryRange)); // returns percentage
   if (batteryPercent > 99) batteryPercent = 100;
   if (batteryPercent < 0) batteryPercent = 0;
-  //batteryPercent = analogRead(BATTERY_MONITOR_PIN);  // for testing
-  SERIAL_PORT_BLUETOOTH.print("MESSAGE_BATTERY_PERCENT");  // lead with "mb"  
-                                      // 'm' indicates that this is a message for the server
-                                      // 'b' indicates that it is a battery percent messsage
-  SERIAL_PORT_BLUETOOTH.println(batteryPercent);  
+  //batteryPercent = analogRead(BATTERY_MONITOR_PIN);  // for testing 
+  return batteryPercent;
 } 
 
 bool checkForFault()
@@ -562,7 +559,10 @@ void HandleCommand(char* input, int length)
       break;
       
     case 'p':
-      checkBattery(); // note that this writes a single char, so value should be in range 0-255
+      SERIAL_PORT_BLUETOOTH.print("MESSAGE_BATTERY_PERCENT");  // lead with "mb"  
+                                      // 'm' indicates that this is a message for the server
+                                      // 'b' indicates that it is a battery percent messsage
+      SERIAL_PORT_BLUETOOTH.println(checkBattery()); 
       break;
       
     // EEPROM commands
@@ -681,11 +681,18 @@ void loop()
  SERIAL_PORT.println(inputBuffer);
 
   // if the command == COMM_CHECK_CHARACTER it is just a local bluetooth comm check
-  if (inputBuffer[0] != COMM_CHECK_CHARACTER && inputLength > 0) HandleCommand(inputBuffer, inputLength);
-   
-  // otherwise, echo the command 
-  else SERIAL_PORT_BLUETOOTH.println(inputBuffer); // need to println because android uses the CR as a delimiter
-  
+  if (inputBuffer[0] != COMM_CHECK_CHARACTER && inputLength > 0)
+  {
+    HandleCommand(inputBuffer, inputLength);
+      // echo the command, so that the android app knows we are alive
+    SERIAL_PORT_BLUETOOTH.println(inputBuffer); // need to println because android uses the CR as a delimiter
+  }
+  else  // just a comm check
+  {
+    SERIAL_PORT_BLUETOOTH.print("c");  // this indicates it is just a response to a comm check
+    SERIAL_PORT_BLUETOOTH.println(checkBattery()); // might as well send along the battery state
+  } 
+    
   // clear the buffer for the next command
   for (int i = 0; i < inputLength; i++) inputBuffer[i] = 0;
 }
