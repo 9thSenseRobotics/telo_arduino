@@ -1,6 +1,11 @@
 // EEPROM write to setup default values and version number in
 // Robot arduinos EEPROM, so that they can be changed remotely
-// version 0.72 matches threeMotorsRobotCommPCBsimple_v_072
+// version 0.74 matches threeMotorsRobotCommPCBsimple_v_074
+// changes are that we added:
+//  EEPROM.write(210, RIGHT_MOTOR_BIAS);
+//  EEPROM.write(211, RIGHT_MOTOR_BW_BIAS);
+//  EEPROM.write(212, RIGHT_MOTOR_STOP_DELAY);
+
 #include <EEPROM.h>
 
 #define SERIAL_PORT Serial
