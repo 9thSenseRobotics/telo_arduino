@@ -1,6 +1,6 @@
 // EEPROM write to setup default values and version number in
 // Robot arduinos EEPROM, so that they can be changed remotely
-// version 0.74 matches threeMotorsRobotCommPCBsimple_v_074
+// version 0.80 matches RobotComm_v_080
 // changes are that we added:
 //  EEPROM.write(210, RIGHT_MOTOR_BIAS);
 //  EEPROM.write(211, RIGHT_MOTOR_BW_BIAS);
@@ -30,25 +30,25 @@
 #define BW_REDUCTION 50
 #define DEFAULT_TILT_UP_SPEED 180
 #define DEFAULT_TILT_DOWN_SPEED 135
-#define DEFAULT_DEGREES 10
+#define DEFAULT_DEGREES 5
 #define TICKS_PER_DEGREE_OF_TILT 30
 #define DEFAULT_TURN_FOREVER_SPEED 220
-#define TURN_TIME 500
-#define MOVE_TIME 1000
-#define TILT_TIME 500
-#define NUDGE_TURN_TIME 200
-#define NUDGE_MOVE_TIME 300
-#define NUDGE_TILT_TIME 200
+#define TURN_TIME 50  // this gets multiplied by 10 in actual use. have to keep parameters < 256
+#define MOVE_TIME 100 // this gets multiplied by 10 in actual use. have to keep parameters < 256
+#define TILT_TIME 50  // this gets multiplied by 10 in actual use. have to keep parameters < 256
+#define NUDGE_TURN_TIME 20  // this gets multiplied by 10 in actual use. have to keep parameters < 256
+#define NUDGE_MOVE_TIME 30  // this gets multiplied by 10 in actual use. have to keep parameters < 256
+#define NUDGE_TILT_TIME 20  // this gets multiplied by 10 in actual use. have to keep parameters < 256
 #define MIN_ACCEL_SPEED 120
 #define MIN_DECEL_SPEED 60
 #define DELTA_SPEED 60
-#define ACCEL_DELAY 200
+#define ACCEL_DELAY 20  // this gets multiplied by 10 in actual use. have to keep parameters < 256
 #define LEFT_MOTOR_BIAS 10
 #define LEFT_MOTOR_BW_BIAS 23
-#define RIGHT_MOTOR_BIAS 0
-#define RIGHT_MOTOR_BW_BIAS 0
-#define LEFT_MOTOR_STOP_DELAY 0
-#define RIGHT_MOTOR_STOP_DELAY 0
+#define RIGHT_MOTOR_BIAS 0  // negative numbers encoded as counting back from 256
+#define RIGHT_MOTOR_BW_BIAS 0  // negative numbers encoded as counting back from 256
+#define LEFT_MOTOR_STOP_DELAY 0  // this gets multiplied by 10 in actual use. have to keep parameters < 256
+#define RIGHT_MOTOR_STOP_DELAY 0 // this gets multiplied by 10 in actual use. have to keep parameters < 256
 // next two are modified so that they stay under 255
 #define CURRENT_LIMIT_TOP_MOTOR 20  // this gets multiplied by 100 in actual use
 #define CURRENT_LIMIT_DRIVE_MOTORS 40 // this gets multiplied by 100 in actual use
@@ -58,6 +58,7 @@
 // so we have 23 steps per cm
 #define ENCODER_TICKS_PER_CM 23
 #define BATTERY_MONITOR_PIN 4
+#define MODIFY_MOTOR_BIASES 1  // this is a boolean, setting to true
 
 //#define ZERO_PERCENT_BATTERY_VOLTAGE 10.5
 //#define FULL_BATTERY_VOLTAGE 13.0
@@ -120,6 +121,7 @@ void setDefaults()
   EEPROM.write(126, INTEGER_VOLTAGE_DIVIDER_RATIO);
   EEPROM.write(127, DECIMAL_VOLTAGE_DIVIDER_RATIO);
   EEPROM.write(128, BATTERY_MONITOR_PIN);
+  EEPROM.write(129, MODIFY_MOTOR_BIASES);
   
   EEPROM.write(201, NUDGE_TURN_TIME);
   EEPROM.write(202, NUDGE_MOVE_TIME);
