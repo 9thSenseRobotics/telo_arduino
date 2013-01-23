@@ -107,7 +107,7 @@ int gyroTurnDelay(int degrees)
       }
       coast();
       SERIAL_PORT.print("When coast command issued, yaw was = ");
-      SERIAL_PORT.print(cumulativeYaw);
+      SERIAL_PORT.println(cumulativeYaw);
       // give it a moment to stop, monitor yaw during this time
       for (int i=0; i < 10; i++)
       {
@@ -132,7 +132,7 @@ int gyroTurnDelay(int degrees)
       SERIAL_PORT.print(", ");
       SERIAL_PORT.println(totalYaw);
       SERIAL_PORT.print("Yaw baseline = ");
-      SERIAL_PORT.print(gyroZBaseline * GYRO_GAIN_YAW);
+      SERIAL_PORT.println(gyroZBaseline * GYRO_GAIN_YAW);
      
       return (int) (totalT * 1000.); // return total delay
 }

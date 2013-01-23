@@ -84,9 +84,15 @@ void commandMove(int moveSpeed)
 {
   if (moveSpeed != 0 && (!checkForFault()))
   {
-    if (moveSpeed > 0) motorDriver.setSpeedAB(255,255); // + left_motor_bias_default, moveSpeed + right_motor_bias_default);
+    if (moveSpeed > 0) motorDriver.setSpeedAB(moveSpeed + left_motor_bias_default, moveSpeed + right_motor_bias_default);
     else motorDriver.setSpeedAB(moveSpeed - left_motor_bias_default, moveSpeed - right_motor_bias_default);
     Moving = true;
+    SERIAL_PORT.print("moving, L, R speeds = ");
+    if (moveSpeed > 0)  SERIAL_PORT.print(moveSpeed + left_motor_bias_default);
+    else SERIAL_PORT.print(moveSpeed - left_motor_bias_default);
+    SERIAL_PORT.print(", ");
+    if (moveSpeed > 0) SERIAL_PORT.println(moveSpeed + right_motor_bias_default);
+    else SERIAL_PORT.println(moveSpeed - right_motor_bias_default);
   }
   else coast();
 }
@@ -100,6 +106,7 @@ void move(int mySpeed, int moveTime)
   long delayTime; // default is move forever;
   if (moveTime == 0) delayTime = move_time_default; // move a normal amount
   else delayTime = moveTime;  // move a specified amount, negative 1 means move forever
+  
   SERIAL_PORT.print("move time = ");
   SERIAL_PORT.println(delayTime);  
   timeOutCheck = millis();
@@ -118,6 +125,8 @@ void move(int mySpeed, int moveTime)
       //accelerate(mySpeed);
       goSpeed += delta_speed_default; // accelerate every 100 msec
       if (goSpeed > abs(mySpeed)) goSpeed = abs(mySpeed);
+      SERIAL_PORT.print("unbiased command speed = ");
+      SERIAL_PORT.println(goSpeed);
       if (mySpeed > 0) commandMove(goSpeed);
       else commandMove(-goSpeed);
       delay(100);
@@ -128,18 +137,22 @@ void move(int mySpeed, int moveTime)
     long moveCount = 1;
     unsigned long timePrevious = millis();
     initialYaw = totalYaw;
+    double previousYaw = initialYaw;
     while ( (long)(millis() - timeOutCheck) < delayTime) // won't loop if delayTime = 0 (move forever)
     // because millis() returns an unsigned long, when delayTime is negative it is greater than millis() - timeOutCheck
     // because it is treating the comparison as if delayTime is an unsigned long, so the negative value is a
     // very large positive number.
     {
       delay(20);
-      goStraight(initialYaw, timePrevious);  // change the bias levels to make straighter path
+      previousYaw = goStraight(initialYaw, previousYaw, timePrevious,  mySpeed);  // change the bias levels to make straighter path
       if ( !(moveCount % 5)) goSpeed += delta_speed_default; // accelerate every 100 msec
       if (goSpeed > abs(mySpeed)) goSpeed = abs(mySpeed);
+      SERIAL_PORT.print("unbiased, unsigned command speed = ");
+      SERIAL_PORT.println(goSpeed);
       if (mySpeed > 0) commandMove(goSpeed);
       else commandMove(-goSpeed);
       timePrevious = millis();
+      moveCount++;
     }
     if (modify_motor_biases_default && (delayTime >= 0) )  // if we are in a learning mode, write the new biases to EEPROM to recall next powerup
     {
@@ -164,9 +177,9 @@ void move(int mySpeed, int moveTime)
 void turn(int mySpeed, int turnAmount)  // turnAmount is either time (ms) or degrees, depending on if a gyro is present
 {
   double initialYaw;
-  SERIAL_PORT.print("turning, speed = ");
-  SERIAL_PORT.println(mySpeed);
-  SERIAL_PORT.print(" amount = ");
+  SERIAL_PORT.print("turning, speed, amount = ");
+  SERIAL_PORT.print(mySpeed);
+  SERIAL_PORT.print(", ");
   SERIAL_PORT.print(turnAmount);
   if (gyroPresent) SERIAL_PORT.println(" degrees");
   else SERIAL_PORT.println(" msec");
@@ -211,25 +224,58 @@ void tilt(int mySpeed, int tiltTime)
 
 // monitor the yaw and change motor biases to make moving go straight
 // don't allow the changes to get too big, as this routine could get fooled by a stuck wheel
-void goStraight(double initialYaw, unsigned long previousTime)
+double goStraight(double initialYaw, double previousYaw, unsigned long previousTime, int mySpeed)
 {
-  double deltaYaw = updateYaw(millis() - previousTime) - initialYaw;
-  if (deltaYaw < 0) // this means we have turn to the left, so make right motor stronger, left motor weaker
+  double currentYaw = updateYaw(millis() - previousTime);
+  double integratedYaw = currentYaw - initialYaw;
+  double deltaYaw = currentYaw - previousYaw;
+  int MAX_BIAS = 50;
+  int deltaLeft = 0, deltaRight = 0;
+  
+  //derivative, fast immediate correction
+  if (deltaYaw > 0.3) // this means we have turn to the left, so make right motor stronger, left motor weaker
   {
-    if (left_motor_bias_default < 20) left_motor_bias_default++;
-    if (right_motor_bias_default > -20) right_motor_bias_default--;
+    if (left_motor_bias_default > -MAX_BIAS) deltaLeft = -4;
+    if (right_motor_bias_default < MAX_BIAS) deltaRight = 4;
   }
-  if (deltaYaw > 0)  // we have turn to the right, so make left motor stronger, right motor weaker
+  if (deltaYaw < -0.3)  // we have turn to the right, so make left motor stronger, right motor weaker
   {
-    if (left_motor_bias_default > -20) left_motor_bias_default--;
-    if (right_motor_bias_default < 20)right_motor_bias_default++;    
+    if (left_motor_bias_default < MAX_BIAS) deltaLeft = 4;
+    if (right_motor_bias_default > -MAX_BIAS) deltaRight= -4;   
   } 
-  /*SERIAL_PORT.print("deltaYaw, left_motor_bias_default, right_motor_bias_default =  ");
+  
+  //integrative, slowly come back to original heading
+  if (integratedYaw > 1) // this means we have turn to the left, so make right motor stronger, left motor weaker
+  {
+    if (left_motor_bias_default > -MAX_BIAS) deltaLeft--;
+    if (right_motor_bias_default < MAX_BIAS) deltaRight++;  
+  }
+  if (integratedYaw < -1)  // we have turn to the right, so make left motor stronger, right motor weaker
+  {
+    if (left_motor_bias_default < MAX_BIAS) deltaLeft++;
+    if (right_motor_bias_default > -MAX_BIAS) deltaRight--;  
+  }
+  
+  if (mySpeed > 0)
+  {
+    left_motor_bias_default += deltaLeft;
+    right_motor_bias_default += deltaRight;
+  }
+  else
+  {
+    left_motor_bias_default -= deltaLeft;
+    right_motor_bias_default -= deltaRight;
+  }    
+  
+  SERIAL_PORT.print("integratedYaw, deltaYaw, left_motor_bias_default, right_motor_bias_default =  ");
+  SERIAL_PORT.print(integratedYaw);
+  SERIAL_PORT.print(", ");
   SERIAL_PORT.print(deltaYaw);
   SERIAL_PORT.print(", ");
   SERIAL_PORT.print(left_motor_bias_default);
   SERIAL_PORT.print(", ");
-  SERIAL_PORT.println(right_motor_bias_default);*/
+  SERIAL_PORT.println(right_motor_bias_default);
+  return currentYaw;
 }
 
 void getMotorCurrents()

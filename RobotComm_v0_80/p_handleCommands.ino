@@ -55,11 +55,12 @@ void HandleCommand(char* input, int length)
       // if there is a gyro, use the input as degrees, speed will be default
       // otherwise, use the input as speed, degreesToTurn won't be used, nudgeturnTime will be default
       
-      
- //     if (gyroPresent) degreesToTurn = value; // waiting for website to support this by sending degrees to turn*********
-      
-      
+
+ //   if (gyroPresent) degreesToTurn = value; // waiting for website to support this by sending degrees to turn*********
+ //   else  speedToGo = value;
       speedToGo = value; // use this speed for turns and for moving forward and backward
+      
+      
       EEPROMaddress = value;
     }
     else  // means we are writing to the EEPROM
@@ -112,7 +113,7 @@ void HandleCommand(char* input, int length)
       break;
     case 'r':    
       if (gyroPresent) turn(speedToGo, degreesToTurn);
-      turn(speedToGo, turn_time_default);  // turn right for the default time
+      else turn(speedToGo, turn_time_default);  // turn right for the default time
       break;
     case 'R':    
       if (gyroPresent) turn(speedToGo, degreesToTurn);
@@ -125,8 +126,8 @@ void HandleCommand(char* input, int length)
       else turn(-speedToGo, nudge_turn_time_default);  // turn left a little
       break;
     case 'l':   // turn left
-      if (gyroPresent) turn(-speedToGo, degrees_default);
-      turn(-speedToGo, turn_time_default);  // turn left for the default time
+      if (gyroPresent) turn(-speedToGo, degreesToTurn);
+      else turn(-speedToGo, turn_time_default);  // turn left for the default time
       break;
     case 'L':
       if (gyroPresent) turn(-speedToGo, degreesToTurn);

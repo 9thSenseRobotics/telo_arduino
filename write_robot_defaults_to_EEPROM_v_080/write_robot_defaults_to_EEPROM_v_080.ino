@@ -43,8 +43,8 @@
 #define MIN_DECEL_SPEED 60
 #define DELTA_SPEED 60
 #define ACCEL_DELAY 20  // this gets multiplied by 10 in actual use. have to keep parameters < 256
-#define LEFT_MOTOR_BIAS 10
-#define LEFT_MOTOR_BW_BIAS 23
+#define LEFT_MOTOR_BIAS 0
+#define LEFT_MOTOR_BW_BIAS 0
 #define RIGHT_MOTOR_BIAS 0  // negative numbers encoded as counting back from 256
 #define RIGHT_MOTOR_BW_BIAS 0  // negative numbers encoded as counting back from 256
 #define LEFT_MOTOR_STOP_DELAY 0  // this gets multiplied by 10 in actual use. have to keep parameters < 256
